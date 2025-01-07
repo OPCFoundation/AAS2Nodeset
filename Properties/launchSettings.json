@@ -1,0 +1,13 @@
+{
+  "profiles": {
+    "AAS2Nodeset": {
+      "commandName": "Project",
+      "environmentVariables": {
+        "MODEL_PATH": "D:\\Code\\AAS2Nodeset\\published"
+      }
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}
