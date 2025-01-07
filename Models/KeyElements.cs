@@ -119,6 +119,6 @@ namespace AdminShell
 
         [EnumMember(Value = "ExternalReference")]
         [XmlEnum(Name = "ExternalReference")]
-        ExternalReference = 26
+        ExternalReference = 27
     }
 }
