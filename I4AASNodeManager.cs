@@ -2,7 +2,6 @@
 namespace AdminShell
 {
     using AAS2Nodeset;
-    using I4AAS.Submodels;
     using Opc.Ua;
     using Opc.Ua.Export;
     using Opc.Ua.Server;
@@ -46,8 +45,6 @@ namespace AdminShell
             _namespaceIndex = Server.NamespaceUris.GetIndexOrAppend(namespaceUris[0]);
 
             _lastUsedId = 0;
-
-            Server.MessageContext.Factory.AddEncodeableTypes(typeof(SubmodelDataType).GetTypeInfo().Assembly);
         }
 
         public override NodeId New(ISystemContext context, NodeState node)
