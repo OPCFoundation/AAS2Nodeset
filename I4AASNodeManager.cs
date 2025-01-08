@@ -2,6 +2,7 @@
 namespace AdminShell
 {
     using AAS2Nodeset;
+    using I4AAS.Submodels;
     using Opc.Ua;
     using Opc.Ua.Export;
     using Opc.Ua.Server;
@@ -9,6 +10,7 @@ namespace AdminShell
     using System.Collections.Generic;
     using System.IO;
     using System.Linq;
+    using System.Reflection;
 
     public class I4AASNodeManager : CustomNodeManager2
     {
@@ -32,6 +34,8 @@ namespace AdminShell
         public I4AASNodeManager(IServerInternal server, ApplicationConfiguration configuration)
         : base(server, configuration)
         {
+            SystemContext.NodeIdFactory = this;
+
             List<string> namespaceUris =
             [
                 "http://opcfoundation.org/UA/i4aas/"
@@ -42,6 +46,8 @@ namespace AdminShell
             _namespaceIndex = Server.NamespaceUris.GetIndexOrAppend(namespaceUris[0]);
 
             _lastUsedId = 0;
+
+            Server.MessageContext.Factory.AddEncodeableTypes(typeof(SubmodelDataType).GetTypeInfo().Assembly);
         }
 
         public override NodeId New(ISystemContext context, NodeState node)
@@ -71,9 +77,9 @@ namespace AdminShell
             lock (Lock)
             {
                 IList<IReference>? objectsFolderReferences = null;
-                if (!externalReferences.TryGetValue(ObjectIds.ObjectsFolder, out objectsFolderReferences))
+                if (!externalReferences.TryGetValue(Opc.Ua.ObjectIds.ObjectsFolder, out objectsFolderReferences))
                 {
-                    externalReferences[ObjectIds.ObjectsFolder] = objectsFolderReferences = new List<IReference>();
+                    externalReferences[Opc.Ua.ObjectIds.ObjectsFolder] = objectsFolderReferences = new List<IReference>();
                 }
 
                 AddNodesFromNodesetXml("./I4AAS.NodeSet2.xml");
@@ -358,7 +364,7 @@ namespace AdminShell
                 BrowseName = browseDisplayName,
                 DisplayName = browseDisplayName,
                 NodeId = new NodeId(browseDisplayName, _namespaceIndex),
-                TypeDefinitionId = ObjectTypeIds.FolderType
+                TypeDefinitionId = Opc.Ua.ObjectTypeIds.FolderType
             };
 
             AddPredefinedNode(SystemContext, x);
