@@ -72,21 +72,39 @@ namespace AdminShell
             return new NodeId(Utils.IncrementIdentifier(ref _lastUsedId), (ushort)Server.NamespaceUris.GetIndex(_namespaceURI));
         }
 
-        public void SaveNodestateCollectionAsNodeSet2(ISystemContext context, NodeStateCollection collection, Stream stream, bool filterSingleNodeIds)
+        public void SaveNodestateCollectionAsNodeSet2(string filePath, NodeStateCollection nodesToExport)
         {
-            UANodeSet nodeSet = new()
+            if (nodesToExport.Count > 0)
             {
-                LastModified = DateTime.UtcNow,
-                LastModifiedSpecified = true
-            };
+                using (var stream = new StreamWriter(filePath))
+                {
 
-            foreach (NodeState node in collection)
-            {
-                nodeSet.Export(context, node);
+                    UANodeSet nodeSet = new()
+                    {
+                        LastModified = DateTime.UtcNow,
+                        LastModifiedSpecified = true
+                    };
+
+                    foreach (NodeState node in nodesToExport)
+                    {
+                        nodeSet.Export(SystemContext, node);
+                    }
+
+                    nodeSet.Write(stream.BaseStream);
+                    stream.Flush();
+                }
+
+                // fixup our model definitions
+                string exportedContent = System.IO.File.ReadAllText(filePath);
+                exportedContent = exportedContent.Replace("</NamespaceUris>", "</NamespaceUris>\n" +
+                    "  <Models>\n" +
+                    "    <Model ModelUri=\"" + _namespaceURI + "\" Version=\"1.0.0\" PublicationDate=\"" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") + "\">\n" +
+                    "      <RequiredModel ModelUri=\"http://opcfoundation.org/UA/I4AAS/\" Version=\"5.0.0\" PublicationDate=\"2021-06-04T00:00:00Z\"/>\n" +
+//                    "      <RequiredModel ModelUri=\"http://opcfoundation.org/UA/\" Version=\"1.04.3\" PublicationDate=\"2019-09-09T00:00:00Z\" />\n" +
+                    "    </Model>\n" +
+                    "  </Models>");
+                System.IO.File.WriteAllText(filePath, exportedContent);
             }
-
-            nodeSet.Write(stream);
-            stream.Flush();
         }
 
         public override void CreateAddressSpace(IDictionary<NodeId, IList<IReference>> externalReferences)
@@ -129,22 +147,16 @@ namespace AdminShell
                             NodeStateCollection nodesToExport = new();
                             foreach (NodeState node in PredefinedNodes.Values)
                             {
-                                // only export nodes belonging to the I4AAS namespace
-                                if (node.NodeId.NamespaceIndex != (ushort)Server.NamespaceUris.GetIndex(_namespaceURI))
+                                // only export nodes belonging to our AAS submodel-template namespace
+                                if (node.NodeId.NamespaceIndex == (ushort)Server.NamespaceUris.GetIndex(_namespaceURI))
                                 {
-                                    continue;
+                                    nodesToExport.Add(node);
                                 }
-
-                                nodesToExport.Add(node);
                             }
 
                             // export nodeset XML
                             Console.WriteLine($"Writing {nodesToExport.Count} nodes to file {c_exportFilename}!");
-
-                            using (var stream = new StreamWriter(c_exportFilename))
-                            {
-                                SaveNodestateCollectionAsNodeSet2(SystemContext, nodesToExport, stream.BaseStream, false);
-                            }
+                            SaveNodestateCollectionAsNodeSet2(c_exportFilename, nodesToExport);
 
                             Console.WriteLine();
                         }
