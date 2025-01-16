@@ -55,17 +55,8 @@ namespace AAS2Nodeset
 
                         reader.Close();
 
-                        if ((g_AASEnv != null) && (g_AASEnv.Submodels.Count > 0))
-                        {
-                            // convert to NodeSet2 by starting an OPC UA server, converting the AAS Environment according to I4AAS spec and exporting the server's address space
-                            ApplicationInstance app = new();
-                            ApplicationConfiguration config = app.LoadApplicationConfiguration(Path.Combine(Directory.GetCurrentDirectory(), "Application.Config.xml"), false).GetAwaiter().GetResult();
-
-                            app.CheckApplicationInstanceCertificate(false, 0);
-                            app.Start(new SimpleServer());
-                            app.Stop();
-                        }
-                    }
+                        ExportNodeset();
+                }
                     catch (Exception ex)
                     {
                         Console.WriteLine($"Error: {ex.Message}, skipping this model!");
@@ -88,22 +79,33 @@ namespace AAS2Nodeset
                     JsonSerializerSettings settings = new JsonSerializerSettings { TypeNameHandling = TypeNameHandling.Auto };
                     g_AASEnv = JsonConvert.DeserializeObject<AssetAdministrationShellEnvironment>(jsonModel.Value, settings);
 
-                    if ((g_AASEnv != null) && (g_AASEnv.Submodels.Count > 0))
-                    {
-                        // convert to NodeSet2 by starting an OPC UA server, converting the AAS Environment according to I4AAS spec and exporting the server's address space
-                        ApplicationInstance app = new();
-                        ApplicationConfiguration config = app.LoadApplicationConfiguration(Path.Combine(Directory.GetCurrentDirectory(), "Application.Config.xml"), false).GetAwaiter().GetResult();
-
-                        app.CheckApplicationInstanceCertificate(false, 0);
-                        app.Start(new SimpleServer());
-                        app.Stop();
-                    }
+                    ExportNodeset();
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error: {ex.Message}, skipping this model!");
                     Console.WriteLine();
                 }
+            }
+        }
+
+        private static void ExportNodeset()
+        {
+            if ((g_AASEnv != null) && (g_AASEnv.Submodels.Count > 0))
+            {
+                // convert to NodeSet2 by starting an OPC UA server, converting the AAS Environment according to I4AAS spec and exporting the server's address space
+                ApplicationInstance app = new();
+                ApplicationConfiguration config = app.LoadApplicationConfiguration(Path.Combine(Directory.GetCurrentDirectory(), "Application.Config.xml"), false).GetAwaiter().GetResult();
+
+                app.CheckApplicationInstanceCertificate(false, 0);
+
+                // create OPC UA cert validator
+                app.ApplicationConfiguration.CertificateValidator = new CertificateValidator();
+                app.ApplicationConfiguration.CertificateValidator.CertificateValidation += new CertificateValidationEventHandler(CertificateValidationCallback);
+                app.ApplicationConfiguration.CertificateValidator.Update(app.ApplicationConfiguration.SecurityConfiguration).GetAwaiter().GetResult();
+
+                app.Start(new SimpleServer());
+                app.Stop();
             }
         }
 
@@ -160,6 +162,15 @@ namespace AAS2Nodeset
             }
 
             return nsURI;
+        }
+
+        private static void CertificateValidationCallback(CertificateValidator sender, CertificateValidationEventArgs e)
+        {
+            // always trust the OPC UA certificate
+            if (e.Error.StatusCode == StatusCodes.BadCertificateUntrusted)
+            {
+                e.Accept = true;
+            }
         }
     }
 }

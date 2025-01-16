@@ -14,12 +14,7 @@ namespace AdminShell
     {
         // AAS type nodeId constants from I4AAS Companion Spec
         const int c_assetAdministrationShellTypeNodeId = 1002;
-        const int c_administrativeInformationTypeNodeId = 1030;
-        const int c_qualifierTypeNodeId = 1032;
-        const int c_identifierTypeNodeId = 1029;
         const int c_referenceTypeNodeId = 1004;
-        const int c_dataSpecificationTypeNodeId = 1027;
-        const int c_submodelElementTypeNodeId = 1009;
         const int c_submodelTypeNodeId = 1006;
         const int c_conceptDescriptionTypeNodeId = 1007;
         const int c_assetTypeNodeId = 1005;
@@ -100,7 +95,6 @@ namespace AdminShell
                     "  <Models>\n" +
                     "    <Model ModelUri=\"" + _namespaceURI + "\" Version=\"1.0.0\" PublicationDate=\"" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") + "\">\n" +
                     "      <RequiredModel ModelUri=\"http://opcfoundation.org/UA/I4AAS/\" Version=\"5.0.0\" PublicationDate=\"2021-06-04T00:00:00Z\"/>\n" +
-//                    "      <RequiredModel ModelUri=\"http://opcfoundation.org/UA/\" Version=\"1.04.3\" PublicationDate=\"2019-09-09T00:00:00Z\" />\n" +
                     "    </Model>\n" +
                     "  </Models>");
                 System.IO.File.WriteAllText(filePath, exportedContent);
@@ -119,14 +113,9 @@ namespace AdminShell
 
                 AddNodesFromNodesetXml("I4AAS.NodeSet2.xml");
 
-                _rootAssetAdminShells = CreateFolder(null, "Asset Admin Shells");
-                objectsFolderReferences.Add(new NodeStateReference(ReferenceTypes.Organizes, false, _rootAssetAdminShells.NodeId));
-
-                _rootSubmodels = CreateFolder(null, "Submodels");
-                objectsFolderReferences.Add(new NodeStateReference(ReferenceTypes.Organizes, false, _rootSubmodels.NodeId));
-
-                _rootConceptDescriptions = CreateFolder(null, "Concept Descriptions");
-                objectsFolderReferences.Add(new NodeStateReference(ReferenceTypes.Organizes, false, _rootConceptDescriptions.NodeId));
+                _rootAssetAdminShells = CreateFolder(FindNodeInAddressSpace(ObjectIds.ObjectsFolder), "Asset Admin Shells");
+                _rootSubmodels = CreateFolder(FindNodeInAddressSpace(ObjectIds.ObjectsFolder), "Submodels");
+                _rootConceptDescriptions = CreateFolder(FindNodeInAddressSpace(ObjectIds.ObjectsFolder), "Concept Descriptions");
 
                 if (Program.g_AASEnv != null)
                 {
@@ -291,14 +280,14 @@ namespace AdminShell
 
                     if (aas.AssetInformation != null)
                     {
-                        CreateObject(aasNode, aas.AssetInformation.ToString(), typeNodeId + c_assetTypeNodeId.ToString());
+                        CreateObject(aasNode, aas.AssetInformation.GlobalAssetId, typeNodeId + c_assetTypeNodeId.ToString());
                     }
 
                     if (aas.Submodels != null && aas.Submodels.Count > 0)
                     {
                         foreach (SubmodelReference reference in aas.Submodels)
                         {
-                            CreateVariable<string>(aasNode, "Submodel Reference", typeNodeId + c_referenceTypeNodeId.ToString(), reference.Keys[0].Value);
+                            CreateObject(aasNode, reference.Keys[0].Value, typeNodeId + c_referenceTypeNodeId.ToString());
                         }
                     }
                 }
@@ -324,7 +313,7 @@ namespace AdminShell
             {
                 foreach (ConceptDescription cd in env.ConceptDescriptions)
                 {
-                    CreateObject(_rootConceptDescriptions, cd.IdShort, typeNodeId + c_conceptDescriptionTypeNodeId.ToString());
+                    CreateObject(_rootConceptDescriptions, cd.Id + ";" + cd.IdShort, typeNodeId + c_conceptDescriptionTypeNodeId.ToString());
                 }
             }
 
@@ -348,21 +337,39 @@ namespace AdminShell
             }
             else
             {
-                if (sme is Property)
+                string id;
+                if (sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count > 0)
                 {
-                    CreateVariable<string>(parent, sme.IdShort, typeNodeId + c_submodelElementTypeNodeId.ToString(), ((Property)sme).Value);
-                }
-                else if (sme is Blob)
-                {
-                    CreateVariable<string>(parent, sme.IdShort, typeNodeId + c_submodelElementTypeNodeId.ToString(), ((Blob)sme).Value);
-                }
-                else if (sme is File)
-                {
-                    CreateVariable<string>(parent, sme.IdShort, typeNodeId + c_submodelElementTypeNodeId.ToString(), ((File)sme).Value);
+                    id = sme.SemanticId.Keys[0].Value;
                 }
                 else
                 {
-                    CreateVariable<string>(parent, sme.IdShort, typeNodeId + c_submodelElementTypeNodeId.ToString(), string.Empty);
+
+                    id = sme.IdShort;
+                }
+
+                if (sme is Property)
+                {
+                    CreateStringVariable(parent, id, ((Property)sme).Value);
+                }
+                else if (sme is Blob)
+                {
+                    CreateStringVariable(parent, id, ((Blob)sme).Value);
+                }
+                else if (sme is File)
+                {
+                    CreateStringVariable(parent, id, ((File)sme).Value);
+                }
+                else
+                {
+                    if (sme.Description != null && sme.Description.Count > 0)
+                    {
+                        CreateStringVariable(parent, id, sme.Description[0].Text);
+                    }
+                    else
+                    {
+                        CreateStringVariable(parent, id, string.Empty);
+                    }
                 }
             }
         }
@@ -409,16 +416,16 @@ namespace AdminShell
             return obj;
         }
 
-        public BaseDataVariableState<T> CreateVariable<T>(NodeState? parent, string? browseDisplayName, NodeId dataTypeId, T value)
+        public BaseDataVariableState CreateStringVariable(NodeState? parent, string? browseDisplayName, string value)
         {
-            BaseDataVariableState<T> variable = new(parent)
+            BaseDataVariableState variable = new(parent)
             {
                 BrowseName = browseDisplayName,
                 DisplayName = browseDisplayName,
                 Description = new Opc.Ua.LocalizedText("en", browseDisplayName),
-                DataType = dataTypeId,
-                Value = (T)value,
-                TypeDefinitionId = dataTypeId
+                DataType = new NodeId(DataTypes.String),
+                TypeDefinitionId = VariableTypeIds.BaseDataVariableType,
+                Value = value
             };
 
             variable.NodeId = New(SystemContext, variable);
