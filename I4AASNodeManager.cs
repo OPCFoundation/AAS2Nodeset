@@ -8,7 +8,6 @@ namespace AdminShell
     using System;
     using System.Collections.Generic;
     using System.IO;
-    using System.Linq;
 
     public class I4AASNodeManager : CustomNodeManager2
     {
