@@ -82,7 +82,24 @@ namespace AdminShell
 
                     foreach (NodeState node in nodesToExport)
                     {
-                        nodeSet.Export(SystemContext, node);
+                        // make sure we don't add duplicates
+                        bool alreadyExists = false;
+                        if (nodeSet.Items != null)
+                        {
+                            foreach (UANode existingNode in nodeSet.Items)
+                            {
+                                if (existingNode.NodeId == node.NodeId.ToString().Replace("ns=2", "ns=1"))
+                                {
+                                    alreadyExists = true;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (!alreadyExists)
+                        {
+                            nodeSet.Export(SystemContext, node);
+                        }
                     }
 
                     nodeSet.Write(stream.BaseStream);
