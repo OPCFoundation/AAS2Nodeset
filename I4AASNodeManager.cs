@@ -260,7 +260,7 @@ namespace AdminShell
             {
                 if (collection.Value != null)
                 {
-                    NodeState collectionFolder = CreateFolder(parent, "Submodel Elements");
+                    NodeState collectionFolder = CreateFolder(parent, sme.IdShort);
 
                     foreach (SubmodelElementWrapper smew in collection.Value)
                     {
@@ -270,15 +270,11 @@ namespace AdminShell
             }
             else
             {
-                string id;
+                string id = sme.IdShort;
+                string value = string.Empty;
                 if (sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count > 0)
                 {
-                    id = sme.SemanticId.Keys[0].Value;
-                }
-                else
-                {
-
-                    id = sme.IdShort;
+                    value = sme.SemanticId.Keys[0].Value;
                 }
 
                 if (sme is Property)
@@ -295,14 +291,7 @@ namespace AdminShell
                 }
                 else
                 {
-                    if (sme.Description != null && sme.Description.Count > 0)
-                    {
-                        CreateStringVariable(parent, id, sme.Description[0].Text);
-                    }
-                    else
-                    {
-                        CreateStringVariable(parent, id, string.Empty);
-                    }
+                    CreateStringVariable(parent, id, value);
                 }
             }
         }
