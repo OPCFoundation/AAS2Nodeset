@@ -11,20 +11,13 @@ namespace AdminShell
 
     public class I4AASNodeManager : CustomNodeManager2
     {
-        // AAS type nodeId constants from I4AAS Companion Spec
-        const int c_assetAdministrationShellTypeNodeId = 1002;
-        const int c_referenceTypeNodeId = 1004;
-        const int c_submodelTypeNodeId = 1006;
-        const int c_conceptDescriptionTypeNodeId = 1007;
-        const int c_assetTypeNodeId = 1005;
-
         private long _lastUsedId = 0;
 
         private string _namespaceURI = "http://opcfoundation.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].IdShort + "/";
 
-        public NodeState? _rootAssetAdminShells = null;
-        public NodeState? _rootSubmodels = null;
-        public NodeState? _rootConceptDescriptions = null;
+        public FolderState? _rootAssetAdminShells = null;
+        public FolderState? _rootSubmodels = null;
+        public FolderState? _rootConceptDescriptions = null;
 
         public I4AASNodeManager(IServerInternal server, ApplicationConfiguration configuration)
         : base(server, configuration)
@@ -36,28 +29,7 @@ namespace AdminShell
                 _namespaceURI
             };
 
-            LoadNamespaceUrisFromNodesetXml(namespaceUris, "I4AAS.NodeSet2.xml");
-
             NamespaceUris = namespaceUris;
-        }
-
-        private void LoadNamespaceUrisFromNodesetXml(List<string> namespaceUris, string nodesetFile)
-        {
-            using (FileStream stream = new(nodesetFile, FileMode.Open, FileAccess.Read))
-            {
-                UANodeSet nodeSet = UANodeSet.Read(stream);
-
-                if ((nodeSet.NamespaceUris != null) && (nodeSet.NamespaceUris.Length > 0))
-                {
-                    foreach (string ns in nodeSet.NamespaceUris)
-                    {
-                        if (!namespaceUris.Contains(ns))
-                        {
-                            namespaceUris.Add(ns);
-                        }
-                    }
-                }
-            }
         }
 
         public override NodeId New(ISystemContext context, NodeState node)
@@ -109,9 +81,7 @@ namespace AdminShell
                 string exportedContent = System.IO.File.ReadAllText(filePath);
                 exportedContent = exportedContent.Replace("</NamespaceUris>", "</NamespaceUris>\n" +
                     "  <Models>\n" +
-                    "    <Model ModelUri=\"" + _namespaceURI + "\" Version=\"1.0.0\" PublicationDate=\"" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") + "\">\n" +
-                    "      <RequiredModel ModelUri=\"http://opcfoundation.org/UA/I4AAS/\" Version=\"5.0.0\" PublicationDate=\"2021-06-04T00:00:00Z\"/>\n" +
-                    "    </Model>\n" +
+                    "    <Model ModelUri=\"" + _namespaceURI + "\" Version=\"1.0.0\" PublicationDate=\"" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") + "\"/>\n" +
                     "  </Models>");
                 System.IO.File.WriteAllText(filePath, exportedContent);
             }
@@ -126,8 +96,6 @@ namespace AdminShell
                 {
                     externalReferences[ObjectIds.ObjectsFolder] = objectsFolderReferences = new List<IReference>();
                 }
-
-                AddNodesFromNodesetXml("I4AAS.NodeSet2.xml");
 
                 _rootAssetAdminShells = CreateFolder(FindNodeInAddressSpace(ObjectIds.ObjectsFolder), "Asset Admin Shells");
                 _rootSubmodels = CreateFolder(FindNodeInAddressSpace(ObjectIds.ObjectsFolder), "Submodels");
@@ -145,7 +113,7 @@ namespace AdminShell
                     string c_exportFilename;
                     if (Program.g_AASEnv.AssetAdministrationShells[0].IdShort != null)
                     {
-                        c_exportFilename = Path.Combine(Directory.GetCurrentDirectory(), "NodeSets", Program.g_AASEnv.AssetAdministrationShells[0].IdShort + ".NodeSet2.xml");
+                        c_exportFilename = Path.Combine(Directory.GetCurrentDirectory(), "NodeSets", Program.g_AASEnv.AssetAdministrationShells[0].IdShort.Replace("/", "_").Replace(":", "_") + ".NodeSet2.xml");
 
                         try
                         {
@@ -177,50 +145,36 @@ namespace AdminShell
             }
         }
 
-        private void AddNodesFromNodesetXml(string nodesetFile)
-        {
-            using (Stream stream = new FileStream(nodesetFile, FileMode.Open))
-            {
-                UANodeSet nodeSet = UANodeSet.Read(stream);
-
-                NodeStateCollection predefinedNodes = new NodeStateCollection();
-
-                nodeSet.Import(SystemContext, predefinedNodes);
-
-                for (int i = 0; i < predefinedNodes.Count; i++)
-                {
-                    try
-                    {
-                        AddPredefinedNode(SystemContext, predefinedNodes[i]);
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine(ex.Message, ex);
-                    }
-                }
-            }
-        }
-
         public void CreateObjects(AssetAdministrationShellEnvironment env)
         {
-            string typeNodeId = "ns=" + Server.NamespaceUris.GetIndex("http://opcfoundation.org/UA/I4AAS/").ToString() + ";i=";
-
             if (env.AssetAdministrationShells != null)
             {
                 foreach (AssetAdministrationShell aas in env.AssetAdministrationShells)
                 {
-                    BaseObjectState aasNode = CreateObject(_rootAssetAdminShells, aas.IdShort, typeNodeId + c_assetAdministrationShellTypeNodeId.ToString());
-
-                    if (aas.AssetInformation != null)
+                    // fall back to ID if no IDShort is provided
+                    if (string.IsNullOrEmpty(aas.IdShort))
                     {
-                        CreateObject(aasNode, aas.AssetInformation.GlobalAssetId, typeNodeId + c_assetTypeNodeId.ToString());
+                        aas.IdShort = aas.Id;
+                    }
+
+                    // fall back to Identification if no IDShort and no ID is provided
+                    if (string.IsNullOrEmpty(aas.IdShort))
+                    {
+                        aas.IdShort = aas.Identification.Id;
+                    }
+
+                    FolderState aasNode = CreateFolder(_rootAssetAdminShells, aas.IdShort);
+
+                    if ((aas.AssetInformation != null) && !string.IsNullOrEmpty(aas.AssetInformation.GlobalAssetId))
+                    {
+                        CreateStringVariable(aasNode, aas.AssetInformation.GlobalAssetId, string.Empty);
                     }
 
                     if (aas.Submodels != null && aas.Submodels.Count > 0)
                     {
                         foreach (SubmodelReference reference in aas.Submodels)
                         {
-                            CreateObject(aasNode, reference.Keys[0].Value, typeNodeId + c_referenceTypeNodeId.ToString());
+                            CreateStringVariable(aasNode, reference.Keys[0].Value, string.Empty);
                         }
                     }
                 }
@@ -230,7 +184,7 @@ namespace AdminShell
             {
                 foreach (Submodel submodel in env.Submodels)
                 {
-                    BaseObjectState submodelNode = CreateObject(_rootSubmodels, submodel.IdShort, typeNodeId + c_submodelTypeNodeId.ToString());
+                    FolderState submodelNode = CreateFolder(_rootSubmodels, submodel.IdShort);
 
                     if (submodel.SubmodelElements.Count > 0)
                     {
@@ -246,21 +200,23 @@ namespace AdminShell
             {
                 foreach (ConceptDescription cd in env.ConceptDescriptions)
                 {
-                    CreateObject(_rootConceptDescriptions, cd.Id + ";" + cd.IdShort, typeNodeId + c_conceptDescriptionTypeNodeId.ToString());
+                    CreateStringVariable(_rootConceptDescriptions, cd.Id, cd.IdShort);
                 }
             }
-
         }
 
         private void CreateSubmodelElement(NodeState parent, SubmodelElement sme)
         {
-            string typeNodeId = "ns=" + Server.NamespaceUris.GetIndex("http://opcfoundation.org/UA/I4AAS/").ToString() + ";i=";
-
             if (sme is SubmodelElementCollection collection)
             {
                 if (collection.Value != null)
                 {
-                    NodeState collectionFolder = CreateFolder(parent, sme.IdShort);
+                    if (string.IsNullOrEmpty(sme.IdShort) && (sme.SemanticId.Keys != null) && (sme.SemanticId.Keys.Count > 0))
+                    {
+                        sme.IdShort = sme.SemanticId.Keys[0].Value;
+                    }
+
+                    FolderState collectionFolder = CreateFolder(parent, sme.IdShort);
 
                     foreach (SubmodelElementWrapper smew in collection.Value)
                     {
@@ -270,34 +226,53 @@ namespace AdminShell
             }
             else
             {
-                string id = sme.IdShort;
-                string value = string.Empty;
-                if (sme.SemanticId.Keys != null && sme.SemanticId.Keys.Count > 0)
+                // fall back to SemanticID if no IDShort is provided
+                if (string.IsNullOrEmpty(sme.IdShort) && (sme.SemanticId.Keys != null) && (sme.SemanticId.Keys.Count > 0))
                 {
-                    value = sme.SemanticId.Keys[0].Value;
+                    sme.IdShort = sme.SemanticId.Keys[0].Value;
                 }
 
                 if (sme is Property)
                 {
-                    CreateStringVariable(parent, id, ((Property)sme).Value);
+                    CreateStringVariable(parent, sme.IdShort, ((Property)sme).Value);
                 }
                 else if (sme is Blob)
                 {
-                    CreateStringVariable(parent, id, ((Blob)sme).Value);
+                    CreateStringVariable(parent, sme.IdShort, ((Blob)sme).Value);
                 }
                 else if (sme is File)
                 {
-                    CreateStringVariable(parent, id, ((File)sme).Value);
+                    CreateStringVariable(parent, sme.IdShort, ((File)sme).Value);
+                }
+                else if (sme is ReferenceElement)
+                {
+                    if (string.IsNullOrEmpty(sme.IdShort) && (((ReferenceElement)sme).Value != null) && (((ReferenceElement)sme).Value.Keys.Count > 0) && (((ReferenceElement)sme).Value.Keys[0].Value != null))
+                    {
+                        sme.IdShort = ((ReferenceElement)sme).Value.Keys[0].Value;
+                        CreateStringVariable(parent, sme.IdShort, string.Empty);
+                    }
                 }
                 else
                 {
-                    CreateStringVariable(parent, id, value);
+                    // use the SemanticID as the value of the variable
+                    string value = string.Empty;
+                    if ((sme.SemanticId.Keys != null) && (sme.SemanticId.Keys.Count > 0))
+                    {
+                        value = sme.SemanticId.Keys[0].Value;
+                    }
+
+                    CreateStringVariable(parent, sme.IdShort, value);
                 }
             }
         }
 
         public FolderState CreateFolder(NodeState? parent, string browseDisplayName)
         {
+            if (string.IsNullOrEmpty(browseDisplayName))
+            {
+                throw new ArgumentNullException("Cannot create UA folder with empty browsename!");
+            }
+
             FolderState folder = new(parent)
             {
                 BrowseName = browseDisplayName,
@@ -317,8 +292,13 @@ namespace AdminShell
             return folder;
         }
 
-        public BaseObjectState CreateObject(NodeState? parent, string? idShort, string nodeId)
+        public BaseObjectState CreateObject(NodeState? parent, string idShort, string nodeId)
         {
+            if (string.IsNullOrEmpty(idShort) || string.IsNullOrEmpty(nodeId))
+            {
+                throw new ArgumentNullException("Cannot create UA object with empty browsename or type definition!");
+            }
+
             BaseObjectState obj = new(parent)
             {
                 BrowseName = idShort,
@@ -338,8 +318,13 @@ namespace AdminShell
             return obj;
         }
 
-        public BaseDataVariableState CreateStringVariable(NodeState? parent, string? browseDisplayName, string value)
+        public BaseDataVariableState CreateStringVariable(NodeState? parent, string browseDisplayName, string value)
         {
+            if (string.IsNullOrEmpty(browseDisplayName))
+            {
+                throw new ArgumentNullException("Cannot create UA variable with empty browsename!");
+            }
+
             BaseDataVariableState variable = new(parent)
             {
                 BrowseName = browseDisplayName,
