@@ -13,7 +13,7 @@ namespace AdminShell
     {
         private long _lastUsedId = 0;
 
-        private string _namespaceURI = "http://opcfoundation.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].IdShort + "/";
+        private string _namespaceURI = "http://opcfoundation.org/UA/AAS2Nodeset/";
 
         public FolderState? _rootAssetAdminShells = null;
         public FolderState? _rootSubmodels = null;
@@ -24,10 +24,22 @@ namespace AdminShell
         {
             SystemContext.NodeIdFactory = this;
 
-            List<string> namespaceUris = new()
+            List<string> namespaceUris = new();
+
+            if (!string.IsNullOrEmpty(Program.g_AASEnv?.AssetAdministrationShells[0].IdShort))
             {
-                _namespaceURI
-            };
+                _namespaceURI = "http://opcfoundation.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].IdShort.Replace("/", "_").Replace(":", "_") + "/";
+            }
+            else if (!string.IsNullOrEmpty(Program.g_AASEnv?.AssetAdministrationShells[0].Id))
+            {
+                _namespaceURI = "http://opcfoundation.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].Id.Replace("/", "_").Replace(":", "_") + "/";
+            }
+            else if (!string.IsNullOrEmpty(Program.g_AASEnv?.AssetAdministrationShells[0].Identification?.Id))
+            {
+                _namespaceURI = "http://opcfoundation.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].Identification.Id.Replace("/", "_").Replace(":", "_") + "/";
+            }
+
+            namespaceUris.Add(_namespaceURI);
 
             NamespaceUris = namespaceUris;
         }
