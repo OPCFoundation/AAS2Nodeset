@@ -11,14 +11,10 @@
 
   <ItemGroup>
     <None Remove="Application.Config.xml" />
-    <None Remove="DPP_AAS_Example.json" />
   </ItemGroup>
 
   <ItemGroup>
     <Content Include="Application.Config.xml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="DPP_AAS_Example.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
