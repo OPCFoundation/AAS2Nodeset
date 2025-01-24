@@ -339,12 +339,16 @@ namespace AdminShell
 
             BaseDataVariableState variable = new(parent)
             {
-                BrowseName = browseDisplayName,
-                DisplayName = browseDisplayName,
-                Description = new Opc.Ua.LocalizedText("en", browseDisplayName),
+                SymbolicName = browseDisplayName,
+                BrowseName = new QualifiedName(browseDisplayName, (ushort)Server.NamespaceUris.GetIndex(_namespaceURI)),
+                DisplayName = new Opc.Ua.LocalizedText("en", browseDisplayName),
                 DataType = new NodeId(DataTypes.String),
-                TypeDefinitionId = VariableTypeIds.BaseDataVariableType,
-                Value = value
+                Value = value,
+                ValueRank = ValueRanks.Scalar,
+                AccessLevel = AccessLevels.CurrentReadOrWrite,
+                UserAccessLevel = AccessLevels.CurrentReadOrWrite,
+                UserWriteMask = AttributeWriteMask.ValueForVariableType,
+                WriteMask = AttributeWriteMask.ValueForVariableType,
             };
 
             variable.NodeId = New(SystemContext, variable);
