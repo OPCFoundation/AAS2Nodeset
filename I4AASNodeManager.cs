@@ -349,6 +349,7 @@ namespace AdminShell
                 UserAccessLevel = AccessLevels.CurrentReadOrWrite,
                 UserWriteMask = AttributeWriteMask.ValueForVariableType,
                 WriteMask = AttributeWriteMask.ValueForVariableType,
+                TypeDefinitionId = VariableTypeIds.BaseDataVariableType
             };
 
             variable.NodeId = New(SystemContext, variable);
