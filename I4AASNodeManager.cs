@@ -28,15 +28,15 @@ namespace AdminShell
 
             if (!string.IsNullOrEmpty(Program.g_AASEnv?.AssetAdministrationShells[0].IdShort))
             {
-                _namespaceURI = "http://opcfoundation.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].IdShort.Replace("/", "_").Replace(":", "_") + "/";
+                _namespaceURI = "http://industrialdigitaltwin.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].IdShort.Replace("/", "_").Replace(":", "_") + "/";
             }
             else if (!string.IsNullOrEmpty(Program.g_AASEnv?.AssetAdministrationShells[0].Id))
             {
-                _namespaceURI = "http://opcfoundation.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].Id.Replace("/", "_").Replace(":", "_") + "/";
+                _namespaceURI = "http://industrialdigitaltwin.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].Id.Replace("/", "_").Replace(":", "_") + "/";
             }
             else if (!string.IsNullOrEmpty(Program.g_AASEnv?.AssetAdministrationShells[0].Identification?.Id))
             {
-                _namespaceURI = "http://opcfoundation.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].Identification.Id.Replace("/", "_").Replace(":", "_") + "/";
+                _namespaceURI = "http://industrialdigitaltwin.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].Identification.Id.Replace("/", "_").Replace(":", "_") + "/";
             }
 
             namespaceUris.Add(_namespaceURI);
