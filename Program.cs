@@ -14,60 +14,60 @@ namespace AAS2Nodeset
 
         static void Main(string[] args)
         {
-                // read XML AAS models
-                Dictionary<string, string> xmlModels = RetrieveModelsFromDirectory("*.xml");
+            // read XML AAS models
+            Dictionary<string, string> xmlModels = RetrieveModelsFromDirectory("*.xml");
 
-                Console.WriteLine();
+            Console.WriteLine();
 
-                // parse XML AAS models
-                foreach (KeyValuePair<string, string> xmlModel in xmlModels)
+            // parse XML AAS models
+            foreach (KeyValuePair<string, string> xmlModel in xmlModels)
+            {
+                try
                 {
-                    try
+                    Console.WriteLine("Processing " + xmlModel.Key + "...");
+
+                    string nsURI = TryReadXmlFirstElementNamespaceURI(xmlModel.Value);
+
+                    XmlReaderSettings settings = new XmlReaderSettings();
+                    settings.ConformanceLevel = ConformanceLevel.Document;
+                    XmlReader reader = XmlReader.Create(new StringReader(xmlModel.Value), settings);
+
+                    // read V1.0
+                    if (nsURI != null && nsURI.Trim() == "http://www.admin-shell.io/aas/1/0")
                     {
-                        Console.WriteLine("Processing " + xmlModel.Key + "...");
-
-                        string nsURI = TryReadXmlFirstElementNamespaceURI(xmlModel.Value);
-
-                        XmlReaderSettings settings = new XmlReaderSettings();
-                        settings.ConformanceLevel = ConformanceLevel.Document;
-                        XmlReader reader = XmlReader.Create(new StringReader(xmlModel.Value), settings);
-
-                        // read V1.0
-                        if (nsURI != null && nsURI.Trim() == "http://www.admin-shell.io/aas/1/0")
-                        {
-                            XmlSerializer serializer = new XmlSerializer(typeof(AssetAdministrationShellEnvironment), "http://www.admin-shell.io/aas/1/0");
-                            g_AASEnv = serializer.Deserialize(reader) as AssetAdministrationShellEnvironment;
-                        }
-
-                        // read V2.0
-                        if (nsURI != null && nsURI.Trim() == "http://www.admin-shell.io/aas/2/0")
-                        {
-                            XmlSerializer serializer = new XmlSerializer(typeof(AssetAdministrationShellEnvironment), "http://www.admin-shell.io/aas/2/0");
-                            g_AASEnv = serializer.Deserialize(reader) as AssetAdministrationShellEnvironment;
-                        }
-
-                        // read V3.0
-                        if (nsURI != null && nsURI.Trim() == "http://www.admin-shell.io/aas/3/0")
-                        {
-                            XmlSerializer serializer = new XmlSerializer(typeof(AssetAdministrationShellEnvironment), "http://www.admin-shell.io/aas/3/0");
-                            g_AASEnv = serializer.Deserialize(reader) as AssetAdministrationShellEnvironment;
-                        }
-
-                        reader.Close();
-
-                        ExportNodeset();
-                }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine($"Error: {ex.Message}, skipping this model!");
-                        Console.WriteLine();
+                        XmlSerializer serializer = new XmlSerializer(typeof(AssetAdministrationShellEnvironment), "http://www.admin-shell.io/aas/1/0");
+                        g_AASEnv = serializer.Deserialize(reader) as AssetAdministrationShellEnvironment;
                     }
+
+                    // read V2.0
+                    if (nsURI != null && nsURI.Trim() == "http://www.admin-shell.io/aas/2/0")
+                    {
+                        XmlSerializer serializer = new XmlSerializer(typeof(AssetAdministrationShellEnvironment), "http://www.admin-shell.io/aas/2/0");
+                        g_AASEnv = serializer.Deserialize(reader) as AssetAdministrationShellEnvironment;
+                    }
+
+                    // read V3.0
+                    if (nsURI != null && nsURI.Trim() == "http://www.admin-shell.io/aas/3/0")
+                    {
+                        XmlSerializer serializer = new XmlSerializer(typeof(AssetAdministrationShellEnvironment), "http://www.admin-shell.io/aas/3/0");
+                        g_AASEnv = serializer.Deserialize(reader) as AssetAdministrationShellEnvironment;
+                    }
+
+                    reader.Close();
+
+                    ExportNodeset();
+            }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Error: {ex.Message}, skipping this model!");
+                    Console.WriteLine();
                 }
+            }
 
-                // read JSON AAS models
-                Dictionary<string, string> jsonModels = RetrieveModelsFromDirectory("*.json");
+            // read JSON AAS models
+            Dictionary<string, string> jsonModels = RetrieveModelsFromDirectory("*.json");
 
-                Console.WriteLine();
+            Console.WriteLine();
 
             // parse JSON AAS models
             foreach (KeyValuePair<string, string> jsonModel in jsonModels)
@@ -87,6 +87,9 @@ namespace AAS2Nodeset
                     Console.WriteLine();
                 }
             }
+
+            Console.WriteLine();
+            Console.WriteLine("Done.");
         }
 
         private static void ExportNodeset()

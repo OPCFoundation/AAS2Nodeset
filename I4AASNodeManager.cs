@@ -93,7 +93,7 @@ namespace AdminShell
                 string exportedContent = System.IO.File.ReadAllText(filePath);
                 exportedContent = exportedContent.Replace("</NamespaceUris>", "</NamespaceUris>\n" +
                     "  <Models>\n" +
-                    "    <Model ModelUri=\"" + _namespaceURI + "\" Version=\"1.0.0\" PublicationDate=\"" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") + "\"/>\n" +
+                    "    <Model ModelUri=\"" + _namespaceURI + "\" Version=\"0.4.0\" PublicationDate=\"" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") + "\"/>\n" +
                     "  </Models>");
                 System.IO.File.WriteAllText(filePath, exportedContent);
             }
