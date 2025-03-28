@@ -25,38 +25,57 @@ namespace AdminShell
         [XmlElement(ElementName = "kind")]
         public ModelingKind Kind { get; set; } = new();
 
-        // Important note: XML serialization uses Submodel Element Wrappers while JSON serialization does not!
-        // So we have to first deserialize into a placeholder Json member and then copy the contents into the correct member
-        [XmlArray(ElementName = "submodelElements")]
-        public List<SubmodelElementWrapper> SubmodelElements { get; set; } = new();
-
-        [XmlIgnore]
         [DataMember(Name = "submodelElements")]
-        public SubmodelElement[] JsonSubmodelElements
+        [XmlArray(ElementName = "submodelElements")]
+        [XmlArrayItem(ElementName = "property", Type = typeof(Property))]
+        [XmlArrayItem(ElementName = "multiLanguageProperty", Type = typeof(MultiLanguageProperty))]
+        [XmlArrayItem(ElementName = "range", Type = typeof(Range))]
+        [XmlArrayItem(ElementName = "file", Type = typeof(File))]
+        [XmlArrayItem(ElementName = "blob", Type = typeof(Blob))]
+        [XmlArrayItem(ElementName = "referenceElement", Type = typeof(ReferenceElement))]
+        [XmlArrayItem(ElementName = "relationshipElement", Type = typeof(RelationshipElement))]
+        [XmlArrayItem(ElementName = "annotatedRelationshipElement", Type = typeof(AnnotatedRelationshipElement))]
+        [XmlArrayItem(ElementName = "capability", Type = typeof(Capability))]
+        [XmlArrayItem(ElementName = "submodelElementCollection", Type = typeof(SubmodelElementCollection))]
+        [XmlArrayItem(ElementName = "operation", Type = typeof(Operation))]
+        [XmlArrayItem(ElementName = "basicEvent", Type = typeof(BasicEvent))]
+        [XmlArrayItem(ElementName = "entity", Type = typeof(Entity))]
+        [XmlArrayItem(ElementName = "submodelElementList", Type = typeof(SubmodelElementList))]
+        [XmlArrayItem(ElementName = "submodelElementStruct", Type = typeof(SubmodelElementStruct))]
+        [XmlArrayItem(ElementName = "globalReferenceElement", Type = typeof(GlobalReferenceElement))]
+        [XmlArrayItem(ElementName = "modelReferenceElement", Type = typeof(ModelReferenceElement))]
+        public List<SubmodelElement> SubmodelElements { get; set; } = new();
+
+        public Submodel()
+            : base()
         {
-            get
+        }
+
+        public Submodel(Submodel other)
+            : base()
+        {
+            if (other == null)
             {
-                var submodelElements = new List<SubmodelElement>();
-
-                foreach (SubmodelElementWrapper smew in SubmodelElements)
-                {
-                    submodelElements.Add(smew.SubmodelElement);
-                }
-
-                return submodelElements.ToArray();
+                return;
             }
 
-            set
+            foreach (var ed in other.EmbeddedDataSpecifications)
             {
-                if (value != null)
-                {
-                    SubmodelElements.Clear();
+                EmbeddedDataSpecifications.Add(new EmbeddedDataSpecification(ed));
+            }
 
-                    foreach (SubmodelElement sme in value)
-                    {
-                        SubmodelElements.Add(new SubmodelElementWrapper() { SubmodelElement = sme });
-                    }
-                }
+            foreach (var q in other.Qualifiers)
+            {
+                Qualifiers.Add(new Qualifier(q));
+            }
+
+            SemanticId = new Reference(other.SemanticId);
+
+            Kind = other.Kind;
+
+            foreach (var sme in other.SubmodelElements)
+            {
+                SubmodelElements.Add(new SubmodelElement(sme));
             }
         }
     }

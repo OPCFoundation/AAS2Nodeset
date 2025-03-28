@@ -16,7 +16,7 @@ namespace AdminShell
         // Important note: XML serialization uses SubModel Element Wrappers while JSON serialization does not!
         // So we have to first deserialize into a placeholder Json member and then copy the contents into the correct member
         [XmlArray(ElementName = "value")]
-        public List<SubmodelElementWrapper> Value { get; set; } = new();
+        public List<SubmodelElement> Value { get; set; } = new();
 
         [XmlIgnore]
         [DataMember(Name = "value")]
@@ -26,9 +26,9 @@ namespace AdminShell
             {
                 var submodelElements = new List<SubmodelElement>();
 
-                foreach (SubmodelElementWrapper smew in Value)
+                foreach (SubmodelElement sme in Value)
                 {
-                    submodelElements.Add(smew.SubmodelElement);
+                    submodelElements.Add(sme);
                 }
 
                 return submodelElements.ToArray();
@@ -42,7 +42,7 @@ namespace AdminShell
 
                     foreach (SubmodelElement sme in value)
                     {
-                        Value.Add(new SubmodelElementWrapper() { SubmodelElement = sme });
+                        Value.Add(sme);
                     }
                 }
             }

@@ -175,6 +175,12 @@ namespace AdminShell
                         aas.IdShort = aas.Identification.Id;
                     }
 
+                    if (string.IsNullOrEmpty(aas.IdShort))
+                    {
+                        // skip this AAS
+                        continue;
+                    }
+
                     FolderState aasNode = CreateFolder(_rootAssetAdminShells, aas.IdShort);
 
                     if ((aas.AssetInformation != null) && !string.IsNullOrEmpty(aas.AssetInformation.GlobalAssetId))
@@ -184,7 +190,7 @@ namespace AdminShell
 
                     if (aas.Submodels != null && aas.Submodels.Count > 0)
                     {
-                        foreach (SubmodelReference reference in aas.Submodels)
+                        foreach (ModelReference reference in aas.Submodels)
                         {
                             CreateStringVariable(aasNode, reference.Keys[0].Value, string.Empty);
                         }
@@ -196,13 +202,36 @@ namespace AdminShell
             {
                 foreach (Submodel submodel in env.Submodels)
                 {
+                    // fall back to ID if no IDShort is provided
+                    if (string.IsNullOrEmpty(submodel.IdShort))
+                    {
+                        submodel.IdShort = submodel.Id;
+                    }
+
+                    // fall back to Identification if no IDShort and no ID is provided
+                    if (string.IsNullOrEmpty(submodel.IdShort))
+                    {
+                        submodel.IdShort = submodel.Identification.Id;
+                    }
+
+                    if (string.IsNullOrEmpty(submodel.IdShort))
+                    {
+                        submodel.IdShort = submodel.Identification.Id;
+                    }
+
+                    if (string.IsNullOrEmpty(submodel.IdShort))
+                    {
+                        // skip this Submodel
+                        continue;
+                    }
+
                     FolderState submodelNode = CreateFolder(_rootSubmodels, submodel.IdShort);
 
                     if (submodel.SubmodelElements.Count > 0)
                     {
-                        foreach (SubmodelElementWrapper smew in submodel.SubmodelElements)
+                        foreach (SubmodelElement sme in submodel.SubmodelElements)
                         {
-                            CreateSubmodelElement(submodelNode, smew.SubmodelElement);
+                            CreateSubmodelElement(submodelNode, sme);
                         }
                     }
                 }
@@ -212,6 +241,34 @@ namespace AdminShell
             {
                 foreach (ConceptDescription cd in env.ConceptDescriptions)
                 {
+                    // fall back to ID if no IDShort is provided
+                    if (string.IsNullOrEmpty(cd.IdShort))
+                    {
+                        cd.IdShort = cd.Id;
+                    }
+
+                    // fall back to Identification if no IDShort and no ID is provided
+                    if (string.IsNullOrEmpty(cd.IdShort))
+                    {
+                        cd.IdShort = cd.Identification.Id;
+                    }
+
+                    if (string.IsNullOrEmpty(cd.IdShort))
+                    {
+                        cd.IdShort = cd.Identification.Id;
+                    }
+
+                    if (string.IsNullOrEmpty(cd.IdShort))
+                    {
+                        // skip this concept description
+                        continue;
+                    }
+
+                    if (string.IsNullOrEmpty(cd.Id))
+                    {
+                        cd.Id = cd.IdShort;
+                    }
+
                     CreateStringVariable(_rootConceptDescriptions, cd.Id, cd.IdShort);
                 }
             }
@@ -230,9 +287,9 @@ namespace AdminShell
 
                     FolderState collectionFolder = CreateFolder(parent, sme.IdShort);
 
-                    foreach (SubmodelElementWrapper smew in collection.Value)
+                    foreach (SubmodelElement smeChild in collection.Value)
                     {
-                        CreateSubmodelElement(collectionFolder, smew.SubmodelElement);
+                        CreateSubmodelElement(collectionFolder, smeChild);
                     }
                 }
             }

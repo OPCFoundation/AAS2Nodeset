@@ -56,7 +56,7 @@ namespace AAS2Nodeset
                     reader.Close();
 
                     ExportNodeset();
-            }
+                }
                 catch (Exception ex)
                 {
                     Console.WriteLine($"Error: {ex.Message}, skipping this model!");
