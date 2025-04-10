@@ -125,7 +125,13 @@ namespace AdminShell
                     string c_exportFilename;
                     if (Program.g_AASEnv.AssetAdministrationShells[0].IdShort != null)
                     {
-                        c_exportFilename = Path.Combine(Directory.GetCurrentDirectory(), "NodeSets", Program.g_AASEnv.AssetAdministrationShells[0].IdShort.Replace("/", "_").Replace(":", "_") + ".NodeSet2.xml");
+                        string aasIdShort = Program.g_AASEnv.AssetAdministrationShells[0].IdShort.Replace("/", "_").Replace(":", "_");
+                        if (string.IsNullOrEmpty(aasIdShort) || aasIdShort == "defaultAdminShell")
+                        {
+                            aasIdShort = Program.g_AASEnv.AssetAdministrationShells[0].Id.Replace("/", "_").Replace(":", "_");
+                        }
+
+                        c_exportFilename = Path.Combine(Directory.GetCurrentDirectory(), "NodeSets", aasIdShort + ".NodeSet2.xml");
 
                         try
                         {

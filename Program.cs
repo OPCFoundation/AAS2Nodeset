@@ -53,6 +53,13 @@ namespace AAS2Nodeset
                         g_AASEnv = serializer.Deserialize(reader) as AssetAdministrationShellEnvironment;
                     }
 
+                    // read V3.1
+                    if (nsURI != null && nsURI.Trim() == "https://admin-shell.io/aas/3/0")
+                    {
+                        XmlSerializer serializer = new XmlSerializer(typeof(AssetAdministrationShellEnvironment), "https://admin-shell.io/aas/3/0");
+                        g_AASEnv = serializer.Deserialize(reader) as AssetAdministrationShellEnvironment;
+                    }
+
                     reader.Close();
 
                     ExportNodeset();
