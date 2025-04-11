@@ -12,41 +12,26 @@ namespace AdminShell
     [DataContract]
     public class SubmodelElementCollection : SubmodelElement
     {
-        // values == SMEs
-        // Important note: XML serialization uses SubModel Element Wrappers while JSON serialization does not!
-        // So we have to first deserialize into a placeholder Json member and then copy the contents into the correct member
-        [XmlArray(ElementName = "value")]
-        public List<SubmodelElement> Value { get; set; } = new();
-
-        [XmlIgnore]
         [DataMember(Name = "value")]
-        public SubmodelElement[] JsonValue
-        {
-            get
-            {
-                var submodelElements = new List<SubmodelElement>();
-
-                foreach (SubmodelElement sme in Value)
-                {
-                    submodelElements.Add(sme);
-                }
-
-                return submodelElements.ToArray();
-            }
-
-            set
-            {
-                if (value != null)
-                {
-                    Value.Clear();
-
-                    foreach (SubmodelElement sme in value)
-                    {
-                        Value.Add(sme);
-                    }
-                }
-            }
-        }
+        [XmlArray(ElementName = "value")]
+        [XmlArrayItem(ElementName = "property", Type = typeof(Property))]
+        [XmlArrayItem(ElementName = "multiLanguageProperty", Type = typeof(MultiLanguageProperty))]
+        [XmlArrayItem(ElementName = "range", Type = typeof(Range))]
+        [XmlArrayItem(ElementName = "file", Type = typeof(File))]
+        [XmlArrayItem(ElementName = "blob", Type = typeof(Blob))]
+        [XmlArrayItem(ElementName = "referenceElement", Type = typeof(ReferenceElement))]
+        [XmlArrayItem(ElementName = "relationshipElement", Type = typeof(RelationshipElement))]
+        [XmlArrayItem(ElementName = "annotatedRelationshipElement", Type = typeof(AnnotatedRelationshipElement))]
+        [XmlArrayItem(ElementName = "capability", Type = typeof(Capability))]
+        [XmlArrayItem(ElementName = "submodelElementCollection", Type = typeof(SubmodelElementCollection))]
+        [XmlArrayItem(ElementName = "operation", Type = typeof(Operation))]
+        [XmlArrayItem(ElementName = "basicEvent", Type = typeof(BasicEvent))]
+        [XmlArrayItem(ElementName = "entity", Type = typeof(Entity))]
+        [XmlArrayItem(ElementName = "submodelElementList", Type = typeof(SubmodelElementList))]
+        [XmlArrayItem(ElementName = "submodelElementStruct", Type = typeof(SubmodelElementStruct))]
+        [XmlArrayItem(ElementName = "globalReferenceElement", Type = typeof(GlobalReferenceElement))]
+        [XmlArrayItem(ElementName = "modelReferenceElement", Type = typeof(ModelReferenceElement))]
+        public List<SubmodelElement> Value { get; set; } = new();
 
         [XmlIgnore]
         public bool Ordered = false;

@@ -26,11 +26,11 @@ namespace AAS2Nodeset
                 {
                     Console.WriteLine("Processing " + xmlModel.Key + "...");
 
-                    string nsURI = TryReadXmlFirstElementNamespaceURI(xmlModel.Value);
+                    string nsURI = TryReadXmlFirstElementNamespaceURI(xmlModel.Value.Replace("aasenv", "environment"));
 
                     XmlReaderSettings settings = new XmlReaderSettings();
                     settings.ConformanceLevel = ConformanceLevel.Document;
-                    XmlReader reader = XmlReader.Create(new StringReader(xmlModel.Value), settings);
+                    XmlReader reader = XmlReader.Create(new StringReader(xmlModel.Value.Replace("aasenv", "environment")), settings);
 
                     // read V1.0
                     if (nsURI != null && nsURI.Trim() == "http://www.admin-shell.io/aas/1/0")
