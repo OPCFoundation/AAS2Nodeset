@@ -107,12 +107,12 @@ namespace AAS2Nodeset
                 ApplicationInstance app = new();
                 ApplicationConfiguration config = app.LoadApplicationConfiguration(Path.Combine(Directory.GetCurrentDirectory(), "Application.Config.xml"), false).GetAwaiter().GetResult();
 
-                app.CheckApplicationInstanceCertificate(false, 0);
+                app.CheckApplicationInstanceCertificates(false, 0);
 
                 // create OPC UA cert validator
                 app.ApplicationConfiguration.CertificateValidator = new CertificateValidator();
                 app.ApplicationConfiguration.CertificateValidator.CertificateValidation += new CertificateValidationEventHandler(CertificateValidationCallback);
-                app.ApplicationConfiguration.CertificateValidator.Update(app.ApplicationConfiguration.SecurityConfiguration).GetAwaiter().GetResult();
+                app.ApplicationConfiguration.CertificateValidator.Update(app.ApplicationConfiguration).GetAwaiter().GetResult();
 
                 app.Start(new SimpleServer());
                 app.Stop();

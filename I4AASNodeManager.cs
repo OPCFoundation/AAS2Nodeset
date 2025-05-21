@@ -28,7 +28,14 @@ namespace AdminShell
 
             if (!string.IsNullOrEmpty(Program.g_AASEnv?.AssetAdministrationShells[0].IdShort))
             {
-                _namespaceURI = "http://industrialdigitaltwin.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].IdShort.Replace("/", "_").Replace(":", "_") + "/";
+                if (Program.g_AASEnv.AssetAdministrationShells[0].IdShort == "defaultAdminShell")
+                {
+                    _namespaceURI = "http://catena-x.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].Id.Replace("/", "_").Replace(":", "_").Replace("urn:", "").Replace(".", "_").Replace("#", "_") + "/";
+                }
+                else
+                {
+                    _namespaceURI = "http://industrialdigitaltwin.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].IdShort.Replace("/", "_").Replace(":", "_") + "/";
+                }
             }
             else if (!string.IsNullOrEmpty(Program.g_AASEnv?.AssetAdministrationShells[0].Id))
             {
