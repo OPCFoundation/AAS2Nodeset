@@ -63,46 +63,39 @@ namespace AdminShell
             {
                 using (var stream = new StreamWriter(filePath))
                 {
-
                     UANodeSet nodeSet = new()
                     {
                         LastModified = DateTime.UtcNow,
                         LastModifiedSpecified = true
                     };
 
+                    nodeSet.Models = [new ModelTableEntry() { ModelUri = _namespaceURI, Version = "0.5.0", PublicationDate = DateTime.UtcNow }];
+
+                    // first add all nodes to the NodeSet
                     foreach (NodeState node in nodesToExport)
                     {
-                        // make sure we don't add duplicates
-                        bool alreadyExists = false;
-                        if (nodeSet.Items != null)
-                        {
-                            foreach (UANode existingNode in nodeSet.Items)
-                            {
-                                if (existingNode.NodeId == node.NodeId.ToString().Replace("ns=2", "ns=1"))
-                                {
-                                    alreadyExists = true;
-                                    break;
-                                }
-                            }
-                        }
+                        nodeSet.Export(SystemContext, node);
+                    }
 
-                        if (!alreadyExists)
+                    // now remove duplicates
+                    List<UANode> nodes = nodeSet.Items.ToList();
+                    for (int i = 0; i < nodes.Count; i++)
+                    {
+                        // remove all duplicate nodes from the List, based on node ID
+                        for (int j = i + 1; j < nodes.Count; j++)
                         {
-                            nodeSet.Export(SystemContext, node);
+                            if (nodes[i].NodeId == nodes[j].NodeId)
+                            {
+                                nodes.RemoveAt(j);
+                                j--;
+                            }
                         }
                     }
 
+                    // write the NodeSet to the file
+                    nodeSet.Items = nodes.ToArray();
                     nodeSet.Write(stream.BaseStream);
-                    stream.Flush();
                 }
-
-                // fixup our model definitions
-                string exportedContent = System.IO.File.ReadAllText(filePath);
-                exportedContent = exportedContent.Replace("</NamespaceUris>", "</NamespaceUris>\n" +
-                    "  <Models>\n" +
-                    "    <Model ModelUri=\"" + _namespaceURI + "\" Version=\"0.4.0\" PublicationDate=\"" + DateTime.UtcNow.ToString("yyyy-MM-ddTHH:mm:ssZ") + "\"/>\n" +
-                    "  </Models>");
-                System.IO.File.WriteAllText(filePath, exportedContent);
             }
         }
 
