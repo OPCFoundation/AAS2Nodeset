@@ -367,32 +367,6 @@ namespace AdminShell
             return folder;
         }
 
-        public BaseObjectState CreateObject(NodeState? parent, string idShort, string nodeId)
-        {
-            if (string.IsNullOrEmpty(idShort) || string.IsNullOrEmpty(nodeId))
-            {
-                throw new ArgumentNullException("Cannot create UA object with empty browsename or type definition!");
-            }
-
-            BaseObjectState obj = new(parent)
-            {
-                BrowseName = idShort,
-                DisplayName = idShort,
-                TypeDefinitionId = nodeId
-            };
-
-            obj.NodeId = New(SystemContext, obj);
-
-            AddPredefinedNode(SystemContext, obj);
-
-            if (parent != null)
-            {
-                parent.AddChild(obj);
-            }
-
-            return obj;
-        }
-
         public BaseDataVariableState CreateStringVariable(NodeState? parent, string browseDisplayName, string value)
         {
             if (string.IsNullOrEmpty(browseDisplayName))
