@@ -69,7 +69,10 @@ namespace AdminShell
                         LastModifiedSpecified = true
                     };
 
-                    nodeSet.Models = [new ModelTableEntry() { ModelUri = _namespaceURI, Version = "0.5.0", PublicationDate = DateTime.UtcNow }];
+                    nodeSet.Models = [new ModelTableEntry() {
+                        ModelUri = _namespaceURI, Version = "0.5.0",
+                        PublicationDateSpecified = true,
+                        PublicationDate = DateTime.UtcNow.Date }];
 
                     // first add all nodes to the NodeSet
                     foreach (NodeState node in nodesToExport)
