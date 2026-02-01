@@ -15,9 +15,7 @@ namespace AdminShell
 
         private string _namespaceURI = "http://opcfoundation.org/UA/AAS2Nodeset/";
 
-        public FolderState? _rootAssetAdminShells = null;
         public FolderState? _rootSubmodels = null;
-        public FolderState? _rootConceptDescriptions = null;
 
         public I4AASNodeManager(IServerInternal server, ApplicationConfiguration configuration)
         : base(server, configuration)
@@ -112,9 +110,7 @@ namespace AdminShell
                     externalReferences[ObjectIds.ObjectsFolder] = objectsFolderReferences = new List<IReference>();
                 }
 
-                _rootAssetAdminShells = CreateFolder(FindNodeInAddressSpace(ObjectIds.ObjectsFolder), "Asset Admin Shells");
-                _rootSubmodels = CreateFolder(FindNodeInAddressSpace(ObjectIds.ObjectsFolder), "Submodels");
-                _rootConceptDescriptions = CreateFolder(FindNodeInAddressSpace(ObjectIds.ObjectsFolder), "Concept Descriptions");
+                _rootSubmodels = CreateFolder(FindNodeInAddressSpace(ObjectIds.ObjectsFolder), "DigitalProductPassport");
 
                 if (Program.g_AASEnv != null)
                 {
@@ -168,45 +164,6 @@ namespace AdminShell
 
         public void CreateObjects(AssetAdministrationShellEnvironment env)
         {
-            if (env.AssetAdministrationShells != null)
-            {
-                foreach (AssetAdministrationShell aas in env.AssetAdministrationShells)
-                {
-                    // fall back to ID if no IDShort is provided
-                    if (string.IsNullOrEmpty(aas.IdShort))
-                    {
-                        aas.IdShort = aas.Id;
-                    }
-
-                    // fall back to Identification if no IDShort and no ID is provided
-                    if (string.IsNullOrEmpty(aas.IdShort))
-                    {
-                        aas.IdShort = aas.Identification.Id;
-                    }
-
-                    if (string.IsNullOrEmpty(aas.IdShort))
-                    {
-                        // skip this AAS
-                        continue;
-                    }
-
-                    FolderState aasNode = CreateFolder(_rootAssetAdminShells, aas.IdShort);
-
-                    if ((aas.AssetInformation != null) && !string.IsNullOrEmpty(aas.AssetInformation.GlobalAssetId))
-                    {
-                        CreateStringVariable(aasNode, aas.AssetInformation.GlobalAssetId, string.Empty);
-                    }
-
-                    if (aas.Submodels != null && aas.Submodels.Count > 0)
-                    {
-                        foreach (ModelReference reference in aas.Submodels)
-                        {
-                            CreateStringVariable(aasNode, reference.Keys[0].Value, string.Empty);
-                        }
-                    }
-                }
-            }
-
             if (env.Submodels != null)
             {
                 foreach (Submodel submodel in env.Submodels)
@@ -243,42 +200,6 @@ namespace AdminShell
                             CreateSubmodelElement(submodelNode, sme);
                         }
                     }
-                }
-            }
-
-            if (env.ConceptDescriptions != null)
-            {
-                foreach (ConceptDescription cd in env.ConceptDescriptions)
-                {
-                    // fall back to ID if no IDShort is provided
-                    if (string.IsNullOrEmpty(cd.IdShort))
-                    {
-                        cd.IdShort = cd.Id;
-                    }
-
-                    // fall back to Identification if no IDShort and no ID is provided
-                    if (string.IsNullOrEmpty(cd.IdShort))
-                    {
-                        cd.IdShort = cd.Identification.Id;
-                    }
-
-                    if (string.IsNullOrEmpty(cd.IdShort))
-                    {
-                        cd.IdShort = cd.Identification.Id;
-                    }
-
-                    if (string.IsNullOrEmpty(cd.IdShort))
-                    {
-                        // skip this concept description
-                        continue;
-                    }
-
-                    if (string.IsNullOrEmpty(cd.Id))
-                    {
-                        cd.Id = cd.IdShort;
-                    }
-
-                    CreateStringVariable(_rootConceptDescriptions, cd.Id, cd.IdShort);
                 }
             }
         }
