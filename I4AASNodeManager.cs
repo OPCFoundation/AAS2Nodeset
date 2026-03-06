@@ -164,6 +164,15 @@ namespace AdminShell
 
         public void CreateObjects(AssetAdministrationShellEnvironment env)
         {
+            // create DPP variables and data element array
+            CreateStringVariable(_rootSubmodels, "UniqueProductIdentifier", string.Empty);
+            CreateStringVariable(_rootSubmodels, "DppSchemaVersion", string.Empty);
+            CreateStringVariable(_rootSubmodels, "DppStatus", string.Empty);
+            CreateStringVariable(_rootSubmodels, "LastUpdate", string.Empty);
+            CreateStringVariable(_rootSubmodels, "EconomicOperatorId", string.Empty);
+            CreateStringVariable(_rootSubmodels, "FacilityId", string.Empty);
+            FolderState elementsNode = CreateFolder(_rootSubmodels, "Elements");
+
             if (env.Submodels != null)
             {
                 foreach (Submodel submodel in env.Submodels)
@@ -186,20 +195,20 @@ namespace AdminShell
                         continue;
                     }
 
-                    FolderState submodelNode = CreateFolder(_rootSubmodels, submodel.IdShort);
+                    FolderState submodelNode = CreateFolder(elementsNode, submodel.IdShort);
 
                     if (submodel.SubmodelElements.Count > 0)
                     {
                         foreach (SubmodelElement sme in submodel.SubmodelElements)
                         {
-                            CreateSubmodelElement(submodelNode, sme);
+                            CreateDataElement(submodelNode, sme);
                         }
                     }
                 }
             }
         }
 
-        private void CreateSubmodelElement(NodeState parent, SubmodelElement sme)
+        private void CreateDataElement(NodeState parent, SubmodelElement sme)
         {
             if (sme is SubmodelElementCollection collection)
             {
@@ -214,7 +223,7 @@ namespace AdminShell
 
                     foreach (SubmodelElement smeChild in collection.Value)
                     {
-                        CreateSubmodelElement(collectionFolder, smeChild);
+                        CreateDataElement(collectionFolder, smeChild);
                     }
                 }
             }
