@@ -182,11 +182,6 @@ namespace AdminShell
 
                     if (string.IsNullOrEmpty(submodel.IdShort))
                     {
-                        submodel.IdShort = submodel.Identification.Id;
-                    }
-
-                    if (string.IsNullOrEmpty(submodel.IdShort))
-                    {
                         // skip this Submodel
                         continue;
                     }
