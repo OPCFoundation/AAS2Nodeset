@@ -68,7 +68,7 @@ namespace AdminShell
                     };
 
                     nodeSet.Models = [new ModelTableEntry() {
-                        ModelUri = _namespaceURI, Version = "0.5.0",
+                        ModelUri = _namespaceURI, Version = "0.9.0",
                         PublicationDateSpecified = true,
                         PublicationDate = DateTime.UtcNow.Date }];
 
