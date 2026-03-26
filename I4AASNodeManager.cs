@@ -2,6 +2,7 @@
 namespace AdminShell
 {
     using AAS2Nodeset;
+    using Newtonsoft.Json;
     using Opc.Ua;
     using Opc.Ua.Export;
     using Opc.Ua.Server;
@@ -100,6 +101,39 @@ namespace AdminShell
             }
         }
 
+        private void SaveValues(string filePath, NodeStateCollection nodesToExport)
+        {
+            if (nodesToExport.Count > 0)
+            {
+                // first remove duplicates
+                List<NodeState> nodes = nodesToExport.ToList();
+                for (int i = 0; i < nodes.Count; i++)
+                {
+                    // remove all duplicate nodes from the List, based on node ID
+                    for (int j = i + 1; j < nodes.Count; j++)
+                    {
+                        if (nodes[i].NodeId == nodes[j].NodeId)
+                        {
+                            nodes.RemoveAt(j);
+                            j--;
+                        }
+                    }
+                }
+
+                // capture name-value pairs of all variables in the NodeSet
+                Dictionary<string, string> values = new();
+                foreach (NodeState node in nodes)
+                {
+                    if (node is BaseDataVariableState variable)
+                    {
+                        values.Add(variable.NodeId.ToString().Replace("ns=2", "ns=1"), variable.Value?.ToString() ?? string.Empty);
+                    }
+                }
+
+                System.IO.File.WriteAllText(filePath.Replace(".NodeSet2.xml", ".values.json"), JsonConvert.SerializeObject(values, Formatting.Indented));
+            }
+        }
+
         public override void CreateAddressSpace(IDictionary<NodeId, IList<IReference>> externalReferences)
         {
             lock (Lock)
@@ -147,6 +181,7 @@ namespace AdminShell
                             // export nodeset XML
                             Console.WriteLine($"Writing {nodesToExport.Count} nodes to file {c_exportFilename}!");
                             SaveNodestateCollectionAsNodeSet2(c_exportFilename, nodesToExport);
+                            SaveValues(c_exportFilename, nodesToExport);
 
                             Console.WriteLine();
                         }
@@ -221,9 +256,36 @@ namespace AdminShell
 
                     FolderState collectionFolder = CreateFolder(parent, sme.IdShort);
 
+                    if ((sme.SemanticId.Keys != null) && (sme.SemanticId.Keys.Count > 0))
+                    {
+                        CreateStringVariable(collectionFolder, "DictionaryReference", sme.SemanticId.Keys[0].Value);
+                    }
+
                     foreach (SubmodelElement smeChild in collection.Value)
                     {
                         CreateDataElement(collectionFolder, smeChild);
+                    }
+                }
+            }
+            else if (sme is SubmodelElementList list)
+            {
+                if (list.Value != null)
+                {
+                    if (string.IsNullOrEmpty(sme.IdShort) && (sme.SemanticId.Keys != null) && (sme.SemanticId.Keys.Count > 0))
+                    {
+                        sme.IdShort = sme.SemanticId.Keys[0].Value;
+                    }
+
+                    FolderState listFolder = CreateFolder(parent, sme.IdShort);
+
+                    if ((sme.SemanticId.Keys != null) && (sme.SemanticId.Keys.Count > 0))
+                    {
+                        CreateStringVariable(listFolder, "DictionaryReference", sme.SemanticId.Keys[0].Value);
+                    }
+
+                    foreach (SubmodelElement smeChild in list.Value)
+                    {
+                        CreateDataElement(listFolder, smeChild);
                     }
                 }
             }
@@ -235,36 +297,38 @@ namespace AdminShell
                     sme.IdShort = sme.SemanticId.Keys[0].Value;
                 }
 
-                if (sme is Property)
+                FolderState smeFolder = CreateFolder(parent, sme.IdShort);
+
+                if (sme is Property property)
                 {
-                    CreateStringVariable(parent, sme.IdShort, ((Property)sme).Value);
+                    CreateStringVariable(smeFolder, "Value", property.Value);
                 }
-                else if (sme is Blob)
+                else if (sme is MultiLanguageProperty multiLanguageProperty)
                 {
-                    CreateStringVariable(parent, sme.IdShort, ((Blob)sme).Value);
-                }
-                else if (sme is File)
-                {
-                    CreateStringVariable(parent, sme.IdShort, ((File)sme).Value);
-                }
-                else if (sme is ReferenceElement)
-                {
-                    if (string.IsNullOrEmpty(sme.IdShort) && (((ReferenceElement)sme).Value != null) && (((ReferenceElement)sme).Value.Keys.Count > 0) && (((ReferenceElement)sme).Value.Keys[0].Value != null))
+                    foreach (var entry in multiLanguageProperty.Value)
                     {
-                        sme.IdShort = ((ReferenceElement)sme).Value.Keys[0].Value;
-                        CreateStringVariable(parent, sme.IdShort, string.Empty);
+                        FolderState mlDataElement = CreateFolder(smeFolder, "MultiLanguageValue");
+
+                        CreateStringVariable(mlDataElement, "Language", entry.Language);
+                        CreateStringVariable(mlDataElement, "Value", entry.Text);
                     }
+                }
+                else if (sme is File file)
+                {
+                    FolderState relatedResource = CreateFolder(smeFolder, "RelatedResource");
+
+                    CreateStringVariable(relatedResource, "contentType", file.MimeType);
+                    CreateStringVariable(relatedResource, "url", file.Value);
                 }
                 else
                 {
-                    // use the SemanticID as the value of the variable
-                    string value = string.Empty;
-                    if ((sme.SemanticId.Keys != null) && (sme.SemanticId.Keys.Count > 0))
-                    {
-                        value = sme.SemanticId.Keys[0].Value;
-                    }
+                    // for other types of SubmodelElements, there is no mapping to the DPP
+                    Console.WriteLine($"Warning: SubmodelElement of type {sme.GetType().Name} with idShort '{sme.IdShort}' has no mapping to the DPP and will be created as an empty folder in the OPC UA address space.");
+                }
 
-                    CreateStringVariable(parent, sme.IdShort, value);
+                if ((sme.SemanticId.Keys != null) && (sme.SemanticId.Keys.Count > 0))
+                {
+                    CreateStringVariable(smeFolder, "DictionaryReference", sme.SemanticId.Keys[0].Value);
                 }
             }
         }
@@ -273,7 +337,7 @@ namespace AdminShell
         {
             if (string.IsNullOrEmpty(browseDisplayName))
             {
-                throw new ArgumentNullException("Cannot create UA folder with empty browsename!");
+                browseDisplayName = "Folder";
             }
 
             FolderState folder = new(parent)

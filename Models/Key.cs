@@ -13,13 +13,13 @@ namespace AdminShell
     {
         [Required]
         [DataMember(Name="type")]
-        [XmlAttribute(AttributeName="type")]
+        [XmlElement(ElementName = "type")]
         [MetaModelName("Key.Type")]
         public KeyElements Type { get; set; }
 
         [Required]
-        [XmlText]
         [DataMember(Name="value")]
+        [XmlElement(ElementName = "value")]
         [MetaModelName("Key.Value")]
         public string Value { get; set; }
 
