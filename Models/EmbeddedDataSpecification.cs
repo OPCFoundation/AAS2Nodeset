@@ -12,12 +12,12 @@ namespace AdminShell
         [Required]
         [DataMember(Name = "dataSpecification")]
         [XmlElement(ElementName = "dataSpecification")]
-        public Reference DataSpecification { get; set; }
+        public Reference? DataSpecification { get; set; }
 
         [Required]
         [DataMember(Name = "dataSpecificationContent")]
         [XmlElement(ElementName = "dataSpecificationContent")]
-        public DataSpecificationContent DataSpecificationContent { get; set; }
+        public DataSpecificationContent? DataSpecificationContent { get; set; }
 
         public EmbeddedDataSpecification() { }
 

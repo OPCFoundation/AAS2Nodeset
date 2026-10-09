@@ -9,7 +9,7 @@ namespace AdminShell
     {
         [DataMember(Name = "referredSemanticId")]
         [XmlElement(ElementName = "referredSemanticId")]
-        public GlobalReference ReferredSemanticId { get; set; }
+        public GlobalReference? ReferredSemanticId { get; set; }
 
         public ModelReference()
         {

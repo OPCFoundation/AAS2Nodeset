@@ -19,7 +19,7 @@ namespace AdminShell
         [Required]
         [DataMember(Name = "value")]
         [XmlElement(ElementName = "value")]
-        public SubmodelElement Value { get; set; }
+        public SubmodelElement? Value { get; set; }
 
         public OperationVariable()
         {
@@ -27,7 +27,7 @@ namespace AdminShell
 
         public OperationVariable(OperationVariable src)
         {
-            Value = new SubmodelElement(src?.Value);
+            Value = (src?.Value != null) ? new SubmodelElement(src.Value) : null;
         }
     }
 }

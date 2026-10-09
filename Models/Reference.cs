@@ -30,7 +30,7 @@ namespace AdminShell
                     Keys.Add(new Key(k));
         }
 
-        public Key GetAsExactlyOneKey()
+        public Key? GetAsExactlyOneKey()
         {
             if (Keys == null || Keys.Count != 1)
                 return null;

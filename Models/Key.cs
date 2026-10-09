@@ -21,7 +21,7 @@ namespace AdminShell
         [DataMember(Name="value")]
         [XmlElement(ElementName = "value")]
         [MetaModelName("Key.Value")]
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         public Key()
         {
@@ -33,7 +33,7 @@ namespace AdminShell
             Value = src.Value;
         }
 
-        public Key(string type, string value)
+        public Key(string type, string? value)
         {
             Type = (KeyElements) Enum.Parse(typeof(KeyElements), type, true);
             Value = value;
@@ -55,7 +55,7 @@ namespace AdminShell
             return $"[{Type}, {Value}]";
         }
 
-        public bool Matches(string type, string id, string value, MatchMode matchMode = MatchMode.Relaxed)
+        public bool Matches(string type, string? id, string? value, MatchMode matchMode = MatchMode.Relaxed)
         {
             if (matchMode == MatchMode.Relaxed)
                 return Type.ToString() == type && Value == id;

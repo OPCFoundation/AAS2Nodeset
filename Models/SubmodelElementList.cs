@@ -39,7 +39,7 @@ namespace AdminShell
 
         [DataMember(Name = "valueTypeValues")]
         [XmlElement(ElementName = "valueTypeValues")]
-        public string ValueTypeValues { get; set; }
+        public string? ValueTypeValues { get; set; }
 
         [DataMember(Name = "orderRelevant")]
         [XmlElement(ElementName = "orderRelevant")]
@@ -51,11 +51,11 @@ namespace AdminShell
 
         [DataMember(Name = "typeValueListElement")]
         [XmlElement(ElementName = "typeValueListElement")]
-        public string TypeValueListElement { get; set; }
+        public string? TypeValueListElement { get; set; }
 
         [DataMember(Name = "valueTypeListElement")]
         [XmlElement(ElementName = "valueTypeListElement")]
-        public string ValueTypeListElement { get; set; }
+        public string? ValueTypeListElement { get; set; }
 
         public SubmodelElementList()
         {

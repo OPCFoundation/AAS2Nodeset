@@ -14,7 +14,7 @@ namespace AdminShell
         [DataMember(Name = "category")]
         [XmlElement(ElementName = "category")]
         [MetaModelName("Referable.Category")]
-        public string Category { get; set; }
+        public string? Category { get; set; }
 
         [DataMember(Name = "description")]
         [XmlArray(ElementName = "description")]
@@ -22,13 +22,13 @@ namespace AdminShell
 
         [DataMember(Name = "displayName")]
         [XmlElement(ElementName = "displayName")]
-        public List<LangString> DisplayName { get; set; }
+        public List<LangString>? DisplayName { get; set; }
 
         [Required]
         [DataMember(Name = "idShort")]
         [XmlElement(ElementName = "idShort")]
         [MetaModelName("Referable.IdShort")]
-        public string IdShort { get; set; }
+        public string? IdShort { get; set; }
 
         [Required]
         [DataMember(Name = "modelType")]
@@ -41,7 +41,7 @@ namespace AdminShell
         public string Checksum { get; set; } = string.Empty;
 
         [XmlIgnore]
-        public Referable Parent { get; set; }
+        public Referable? Parent { get; set; }
 
         [XmlIgnore]
         public static string CONSTANT = "CONSTANT";
@@ -56,7 +56,7 @@ namespace AdminShell
         public static string[] ReferableCategoryNames = new string[] { CONSTANT, Category_PARAMETER, VARIABLE };
 
         [XmlIgnore]
-        public List<Extension> extension = null;
+        public List<Extension>? extension = null;
 
         [XmlIgnore]
         public DateTime TimeStampCreate;
@@ -66,14 +66,14 @@ namespace AdminShell
 
         public void setTimeStamp(DateTime timeStamp)
         {
-            Referable r = this;
+            Referable? r = this;
 
             do
             {
                 r.TimeStamp = timeStamp;
                 if (r != r.Parent)
                 {
-                    r = (Referable)r.Parent;
+                    r = r.Parent;
                 }
                 else
                     r = null;

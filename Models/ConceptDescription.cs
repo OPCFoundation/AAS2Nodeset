@@ -10,11 +10,11 @@ namespace AdminShell
     {
         [DataMember(Name = "embeddedDataSpecifications")]
         [XmlArray(ElementName = "embeddedDataSpecifications")]
-        public List<EmbeddedDataSpecification> EmbeddedDataSpecifications { get; set; }
+        public List<EmbeddedDataSpecification>? EmbeddedDataSpecifications { get; set; }
 
         [DataMember(Name = "isCaseOf")]
         [XmlArray(ElementName = "isCaseOf")]
-        public List<Reference> IsCaseOf { get; set; }
+        public List<Reference>? IsCaseOf { get; set; }
     }
 }
 

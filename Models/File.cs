@@ -13,12 +13,12 @@ namespace AdminShell
         [DataMember(Name = "contentType")]
         [XmlElement(ElementName = "mimeType")]
         [MetaModelName("File.MimeType")]
-        public string MimeType { get; set; }
+        public string? MimeType { get; set; }
 
         [DataMember(Name = "value")]
         [XmlElement(ElementName = "value")]
         [MetaModelName("File.Value")]
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         public File()
         {

@@ -16,7 +16,20 @@ namespace AdminShell
 
         private string _namespaceURI = "http://opcfoundation.org/UA/AAS2Nodeset/";
 
-        public FolderState? _rootSubmodels = null;
+        private const string c_dppNamespaceURI = "http://opcfoundation.org/UA/DigitalProductPassport/";
+
+        private const string c_dppNodesetFilename = "Opc.Ua.DigitalProductPassport.NodeSet2.xml";
+
+        // node IDs (numeric identifiers) of the types defined in the DPP companion specification
+        private const uint c_singleValuedDataElementType = 12;
+        private const uint c_multiValuedDataElementType = 15;
+        private const uint c_dataElementCollectionType = 19;
+        private const uint c_relatedResourceType = 22;
+        private const uint c_multiLanguageDataElementType = 27;
+        private const uint c_digitalProductPassportType = 29;
+        private const uint c_granularityEnumeration = 124;
+
+        public BaseObjectState? _rootSubmodels = null;
 
         public I4AASNodeManager(IServerInternal server, ApplicationConfiguration configuration)
         : base(server, configuration)
@@ -33,7 +46,7 @@ namespace AdminShell
                 }
                 else
                 {
-                    _namespaceURI = "http://industrialdigitaltwin.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].IdShort.Replace("/", "_").Replace(":", "_") + "/";
+                    _namespaceURI = "http://industrialdigitaltwin.org/UA/" + Program.g_AASEnv?.AssetAdministrationShells[0].IdShort?.Replace("/", "_").Replace(":", "_") + "/";
                 }
             }
             else if (!string.IsNullOrEmpty(Program.g_AASEnv?.AssetAdministrationShells[0].Id))
@@ -46,6 +59,7 @@ namespace AdminShell
             }
 
             namespaceUris.Add(_namespaceURI);
+            namespaceUris.Add(c_dppNamespaceURI);
 
             NamespaceUris = namespaceUris;
         }
@@ -54,6 +68,32 @@ namespace AdminShell
         {
             // for new nodes we create, pick our default namespace
             return new NodeId(Utils.IncrementIdentifier(ref _lastUsedId), (ushort)Server.NamespaceUris.GetIndex(_namespaceURI));
+        }
+
+        private ushort DppNamespaceIndex => (ushort)Server.NamespaceUris.GetIndex(c_dppNamespaceURI);
+
+        private NodeId DppNodeId(uint id) => new NodeId(id, DppNamespaceIndex);
+
+        private void LoadDppNodeset()
+        {
+            string nodesetPath = Path.Combine(AppContext.BaseDirectory, c_dppNodesetFilename);
+            if (!System.IO.File.Exists(nodesetPath))
+            {
+                nodesetPath = Path.Combine(Directory.GetCurrentDirectory(), c_dppNodesetFilename);
+            }
+
+            using (FileStream stream = new(nodesetPath, FileMode.Open, FileAccess.Read))
+            {
+                UANodeSet nodeSet = UANodeSet.Read(stream);
+
+                NodeStateCollection predefinedNodes = new();
+                nodeSet.Import(SystemContext, predefinedNodes);
+
+                foreach (NodeState node in predefinedNodes)
+                {
+                    AddPredefinedNode(SystemContext, node);
+                }
+            }
         }
 
         public void SaveNodestateCollectionAsNodeSet2(string filePath, NodeStateCollection nodesToExport)
@@ -71,7 +111,8 @@ namespace AdminShell
                     nodeSet.Models = [new ModelTableEntry() {
                         ModelUri = _namespaceURI, Version = "0.9.0",
                         PublicationDateSpecified = true,
-                        PublicationDate = DateTime.UtcNow.Date }];
+                        PublicationDate = DateTime.UtcNow.Date,
+                        RequiredModel = [new ModelTableEntry() { ModelUri = c_dppNamespaceURI, Version = "1.0.0" }] }];
 
                     // first add all nodes to the NodeSet
                     foreach (NodeState node in nodesToExport)
@@ -124,9 +165,13 @@ namespace AdminShell
                 Dictionary<string, string> values = new();
                 foreach (NodeState node in nodes)
                 {
-                    if (node is BaseDataVariableState variable)
+                    if (node is BaseVariableState variable)
                     {
-                        values.Add(variable.NodeId.ToString().Replace("ns=2", "ns=1"), variable.Value?.ToString() ?? string.Empty);
+                        string value = variable.Value is Array array
+                            ? string.Join(", ", array.Cast<object>().Select(v => v?.ToString()))
+                            : variable.Value?.ToString() ?? string.Empty;
+
+                        values.Add(variable.NodeId.ToString().Replace("ns=2", "ns=1"), value);
                     }
                 }
 
@@ -144,7 +189,11 @@ namespace AdminShell
                     externalReferences[ObjectIds.ObjectsFolder] = objectsFolderReferences = new List<IReference>();
                 }
 
-                _rootSubmodels = CreateFolder(FindNodeInAddressSpace(ObjectIds.ObjectsFolder), "DigitalProductPassport");
+                LoadDppNodeset();
+
+                _rootSubmodels = CreateObject(null, "DigitalProductPassport", DppNodeId(c_digitalProductPassportType));
+                _rootSubmodels.AddReference(ReferenceTypeIds.Organizes, true, ObjectIds.ObjectsFolder);
+                objectsFolderReferences.Add(new NodeStateReference(ReferenceTypeIds.Organizes, false, _rootSubmodels.NodeId));
 
                 if (Program.g_AASEnv != null)
                 {
@@ -156,9 +205,9 @@ namespace AdminShell
                     }
 
                     string c_exportFilename;
-                    if (Program.g_AASEnv.AssetAdministrationShells[0].IdShort != null)
+                    if (Program.g_AASEnv.AssetAdministrationShells[0].IdShort is string rawIdShort)
                     {
-                        string aasIdShort = Program.g_AASEnv.AssetAdministrationShells[0].IdShort.Replace("/", "_").Replace(":", "_");
+                        string aasIdShort = rawIdShort.Replace("/", "_").Replace(":", "_");
                         if (string.IsNullOrEmpty(aasIdShort) || aasIdShort == "defaultAdminShell")
                         {
                             aasIdShort = Program.g_AASEnv.AssetAdministrationShells[0].Id.Replace("/", "_").Replace(":", "_");
@@ -199,14 +248,16 @@ namespace AdminShell
 
         public void CreateObjects(AssetAdministrationShellEnvironment env)
         {
-            // create DPP variables and data element array
-            CreateStringVariable(_rootSubmodels, "UniqueProductIdentifier", string.Empty);
-            CreateStringVariable(_rootSubmodels, "DppSchemaVersion", string.Empty);
-            CreateStringVariable(_rootSubmodels, "DppStatus", string.Empty);
-            CreateStringVariable(_rootSubmodels, "LastUpdate", string.Empty);
-            CreateStringVariable(_rootSubmodels, "EconomicOperatorId", string.Empty);
-            CreateStringVariable(_rootSubmodels, "FacilityId", string.Empty);
-            FolderState elementsNode = CreateFolder(_rootSubmodels, "Elements");
+            // create the properties of the DigitalProductPassportType
+            string dppId = env.AssetAdministrationShells?.FirstOrDefault()?.Id ?? string.Empty;
+            CreateProperty(_rootSubmodels, "DigitalProductPassportId", DataTypeIds.String, dppId);
+            CreateProperty(_rootSubmodels, "UniqueProductIdentifier", DataTypeIds.String, string.Empty);
+            CreateProperty(_rootSubmodels, "Granularity", DppNodeId(c_granularityEnumeration), 0);
+            CreateProperty(_rootSubmodels, "DppSchemaVersion", DataTypeIds.String, string.Empty);
+            CreateProperty(_rootSubmodels, "DppStatus", DataTypeIds.String, string.Empty);
+            CreateProperty(_rootSubmodels, "LastUpdated", DataTypeIds.DateTime, DateTime.MinValue);
+            CreateProperty(_rootSubmodels, "EconomicOperatorId", DataTypeIds.String, string.Empty);
+            CreateProperty(_rootSubmodels, "FacilityId", DataTypeIds.String, string.Empty);
 
             if (env.Submodels != null)
             {
@@ -230,7 +281,7 @@ namespace AdminShell
                         continue;
                     }
 
-                    FolderState submodelNode = CreateFolder(elementsNode, submodel.IdShort);
+                    BaseObjectState submodelNode = CreateDataElementObject(_rootSubmodels, submodel.IdShort, c_dataElementCollectionType, submodel.SemanticId);
 
                     if (submodel.SubmodelElements.Count > 0)
                     {
@@ -254,12 +305,7 @@ namespace AdminShell
                         sme.IdShort = sme.SemanticId.Keys[0].Value;
                     }
 
-                    FolderState collectionFolder = CreateFolder(parent, sme.IdShort);
-
-                    if ((sme.SemanticId.Keys != null) && (sme.SemanticId.Keys.Count > 0))
-                    {
-                        CreateStringVariable(collectionFolder, "DictionaryReference", sme.SemanticId.Keys[0].Value);
-                    }
+                    BaseObjectState collectionFolder = CreateDataElementObject(parent, sme.IdShort, c_dataElementCollectionType, sme.SemanticId);
 
                     foreach (SubmodelElement smeChild in collection.Value)
                     {
@@ -276,12 +322,7 @@ namespace AdminShell
                         sme.IdShort = sme.SemanticId.Keys[0].Value;
                     }
 
-                    FolderState listFolder = CreateFolder(parent, sme.IdShort);
-
-                    if ((sme.SemanticId.Keys != null) && (sme.SemanticId.Keys.Count > 0))
-                    {
-                        CreateStringVariable(listFolder, "DictionaryReference", sme.SemanticId.Keys[0].Value);
-                    }
+                    BaseObjectState listFolder = CreateDataElementObject(parent, sme.IdShort, c_multiValuedDataElementType, sme.SemanticId);
 
                     foreach (SubmodelElement smeChild in list.Value)
                     {
@@ -297,100 +338,111 @@ namespace AdminShell
                     sme.IdShort = sme.SemanticId.Keys[0].Value;
                 }
 
-                FolderState smeFolder = CreateFolder(parent, sme.IdShort);
-
                 if (sme is Property property)
                 {
-                    CreateStringVariable(smeFolder, "Value", property.Value);
+                    BaseObjectState element = CreateDataElementObject(parent, sme.IdShort, c_singleValuedDataElementType, sme.SemanticId);
+                    CreateProperty(element, "Value", DataTypeIds.String, property.Value ?? string.Empty);
                 }
                 else if (sme is MultiLanguageProperty multiLanguageProperty)
                 {
-                    foreach (var entry in multiLanguageProperty.Value)
-                    {
-                        FolderState mlDataElement = CreateFolder(smeFolder, "MultiLanguageValue");
+                    BaseObjectState element = CreateDataElementObject(parent, sme.IdShort, c_multiLanguageDataElementType, sme.SemanticId);
 
-                        CreateStringVariable(mlDataElement, "Language", entry.Language);
-                        CreateStringVariable(mlDataElement, "Value", entry.Text);
-                    }
+                    Opc.Ua.LocalizedText[] texts = (multiLanguageProperty.Value ?? new()).Select(entry => new Opc.Ua.LocalizedText(entry.Language, entry.Text)).ToArray();
+                    CreateProperty(element, "Value", DataTypeIds.LocalizedText, texts, ValueRanks.OneDimension);
                 }
                 else if (sme is File file)
                 {
-                    FolderState relatedResource = CreateFolder(smeFolder, "RelatedResource");
+                    BaseObjectState element = CreateDataElementObject(parent, sme.IdShort, c_relatedResourceType, sme.SemanticId);
 
-                    CreateStringVariable(relatedResource, "contentType", file.MimeType);
-                    CreateStringVariable(relatedResource, "url", file.Value);
+                    CreateProperty(element, "ContentType", DataTypeIds.String, file.MimeType ?? string.Empty);
+                    CreateProperty(element, "Url", new NodeId(23751), file.Value ?? string.Empty);
                 }
                 else
                 {
                     // for other types of SubmodelElements, there is no mapping to the DPP
-                    Console.WriteLine($"Warning: SubmodelElement of type {sme.GetType().Name} with idShort '{sme.IdShort}' has no mapping to the DPP and will be created as an empty folder in the OPC UA address space.");
-                }
+                    Console.WriteLine($"Warning: SubmodelElement of type {sme.GetType().Name} with idShort '{sme.IdShort}' has no mapping to the DPP and will be created as an empty SingleValuedDataElement in the OPC UA address space.");
 
-                if ((sme.SemanticId.Keys != null) && (sme.SemanticId.Keys.Count > 0))
-                {
-                    CreateStringVariable(smeFolder, "DictionaryReference", sme.SemanticId.Keys[0].Value);
+                    BaseObjectState element = CreateDataElementObject(parent, sme.IdShort, c_singleValuedDataElementType, sme.SemanticId);
+                    CreateProperty(element, "Value", DataTypeIds.String, string.Empty);
                 }
             }
         }
 
-        public FolderState CreateFolder(NodeState? parent, string browseDisplayName)
+        private BaseObjectState CreateDataElementObject(NodeState? parent, string? idShort, uint dppTypeId, Reference? semanticId)
         {
-            if (string.IsNullOrEmpty(browseDisplayName))
+            BaseObjectState element = CreateObject(parent, idShort ?? string.Empty, DppNodeId(dppTypeId));
+
+            CreateProperty(element, "ElementId", DataTypeIds.String, idShort ?? string.Empty);
+
+            if ((semanticId?.Keys != null) && (semanticId.Keys.Count > 0))
             {
-                browseDisplayName = "Folder";
+                CreateProperty(element, "DictionaryReference", DataTypeIds.String, semanticId.Keys[0].Value ?? string.Empty);
             }
 
-            FolderState folder = new(parent)
-            {
-                BrowseName = browseDisplayName,
-                DisplayName = browseDisplayName,
-                TypeDefinitionId = ObjectTypeIds.FolderType
-            };
-
-            folder.NodeId = New(SystemContext, folder);
-
-            AddPredefinedNode(SystemContext, folder);
-
-            if (parent != null)
-            {
-                parent.AddChild(folder);
-            }
-
-            return folder;
+            return element;
         }
 
-        public BaseDataVariableState CreateStringVariable(NodeState? parent, string browseDisplayName, string value)
+        public BaseObjectState CreateObject(NodeState? parent, string browseDisplayName, NodeId typeDefinitionId)
         {
             if (string.IsNullOrEmpty(browseDisplayName))
             {
-                throw new ArgumentNullException("Cannot create UA variable with empty browsename!");
+                browseDisplayName = "DataElement";
             }
 
-            BaseDataVariableState variable = new(parent)
+            BaseObjectState obj = new(parent)
             {
                 SymbolicName = browseDisplayName,
                 BrowseName = new QualifiedName(browseDisplayName, (ushort)Server.NamespaceUris.GetIndex(_namespaceURI)),
                 DisplayName = new Opc.Ua.LocalizedText("en", browseDisplayName),
-                DataType = new NodeId(DataTypes.String),
+                TypeDefinitionId = typeDefinitionId,
+                ReferenceTypeId = ReferenceTypeIds.HasComponent
+            };
+
+            obj.NodeId = New(SystemContext, obj);
+
+            AddPredefinedNode(SystemContext, obj);
+
+            if (parent != null)
+            {
+                parent.AddChild(obj);
+            }
+
+            return obj;
+        }
+
+        public PropertyState CreateProperty(NodeState? parent, string browseDisplayName, NodeId dataType, object value, int valueRank = ValueRanks.Scalar)
+        {
+            PropertyState property = new(parent)
+            {
+                SymbolicName = browseDisplayName,
+                BrowseName = new QualifiedName(browseDisplayName, DppNamespaceIndex),
+                DisplayName = new Opc.Ua.LocalizedText("en", browseDisplayName),
+                DataType = dataType,
                 Value = value,
-                ValueRank = ValueRanks.Scalar,
+                ValueRank = valueRank,
                 AccessLevel = AccessLevels.CurrentReadOrWrite,
                 UserAccessLevel = AccessLevels.CurrentReadOrWrite,
                 UserWriteMask = AttributeWriteMask.ValueForVariableType,
                 WriteMask = AttributeWriteMask.ValueForVariableType,
-                TypeDefinitionId = VariableTypeIds.BaseDataVariableType
+                TypeDefinitionId = VariableTypeIds.PropertyType,
+                ReferenceTypeId = ReferenceTypeIds.HasProperty
             };
 
-            variable.NodeId = New(SystemContext, variable);
+            if (valueRank == ValueRanks.OneDimension)
+            {
+                property.ArrayDimensions = new ReadOnlyList<uint>(new List<uint> { 0 });
+            }
 
-            AddPredefinedNode(SystemContext, variable);
+            property.NodeId = New(SystemContext, property);
+
+            AddPredefinedNode(SystemContext, property);
 
             if (parent != null)
             {
-                parent.AddChild(variable);
+                parent.AddChild(property);
             }
 
-            return variable;
+            return property;
         }
     }
 }

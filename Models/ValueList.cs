@@ -1,4 +1,4 @@
-
+﻿
 namespace AdminShell
 {
     using Newtonsoft.Json;
@@ -13,6 +13,6 @@ namespace AdminShell
         [Required]
         [DataMember(Name="valueReferencePairTypes")]
         [XmlArray(ElementName = "valueReferencePairTypes")]
-        public List<ValueObject> ValueReferencePairTypes { get; set; }
+        public List<ValueObject>? ValueReferencePairTypes { get; set; }
     }
 }

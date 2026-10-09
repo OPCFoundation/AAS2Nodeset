@@ -10,16 +10,16 @@ namespace AdminShell
         [DataMember(Name = "value")]
         [XmlElement(ElementName = "value")]
         [MetaModelName("Property.Value")]
-        public string Value { get; set; }
+        public string? Value { get; set; }
 
         [DataMember(Name = "valueId")]
         [XmlElement(ElementName = "valueId")]
-        public GlobalReference ValueId { get; set; }
+        public GlobalReference? ValueId { get; set; }
 
         [DataMember(Name = "valueType")]
         [XmlElement(ElementName = "valueType")]
         [MetaModelName("Property.ValueType")]
-        public string ValueType { get; set; }
+        public string? ValueType { get; set; }
 
         public Property()
         {

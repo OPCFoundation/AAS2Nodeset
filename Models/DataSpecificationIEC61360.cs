@@ -13,52 +13,52 @@ namespace AdminShell
         [DataMember(Name = "dataType")]
         [XmlElement(ElementName = "dataType")]
         [MetaModelName("DataSpecificationIEC61360.DataType")]
-        public string DataType { get; set; }
+        public string? DataType { get; set; }
 
         [DataMember(Name = "definition")]
         [XmlArray(ElementName = "definition")]
-        public List<LangStringIEC61360> Definition { get; set; }
+        public List<LangStringIEC61360>? Definition { get; set; }
 
         [DataMember(Name = "levelType")]
         [XmlArray(ElementName = "levelType")]
-        public List<LevelType> LevelType { get; set; }
+        public List<LevelType>? LevelType { get; set; }
 
         [Required]
         [DataMember(Name = "preferredName")]
         [XmlArray(ElementName = "preferredName")]
-        public List<LangStringIEC61360> PreferredName { get; set; }
+        public List<LangStringIEC61360>? PreferredName { get; set; }
 
         [DataMember(Name = "shortName")]
         [XmlArray(ElementName = "shortName")]
-        public List<LangString> ShortName { get; set; }
+        public List<LangString>? ShortName { get; set; }
 
         [DataMember(Name = "sourceOfDefinition")]
         [XmlElement(ElementName = "sourceOfDefinition")]
         [MetaModelName("DataSpecificationIEC61360.SourceOfDefinition")]
-        public string SourceOfDefinition { get; set; }
+        public string? SourceOfDefinition { get; set; }
 
         [DataMember(Name = "symbol")]
         [XmlElement(ElementName = "symbol")]
         [MetaModelName("DataSpecificationIEC61360.Symbol")]
-        public string Symbol { get; set; }
+        public string? Symbol { get; set; }
 
         [DataMember(Name = "unit")]
         [XmlElement(ElementName = "unit")]
         [MetaModelName("DataSpecificationIEC61360.Unit")]
-        public string Unit { get; set; }
+        public string? Unit { get; set; }
 
         [DataMember(Name = "unitId")]
         [XmlElement(ElementName = "unitId")]
-        public UnitId UnitId { get; set; }
+        public UnitId? UnitId { get; set; }
 
         [DataMember(Name = "valueFormat")]
         [XmlElement(ElementName = "valueFormat")]
         [MetaModelName("DataSpecificationIEC61360.ValueFormat")]
-        public string ValueFormat { get; set; }
+        public string? ValueFormat { get; set; }
 
         [DataMember(Name = "valueList")]
         [XmlElement(ElementName = "valueList")]
-        public ValueList ValueList { get; set; }
+        public ValueList? ValueList { get; set; }
 
         public DataSpecificationIEC61360() { }
 

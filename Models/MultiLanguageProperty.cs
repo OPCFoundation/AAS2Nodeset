@@ -14,7 +14,7 @@ namespace AdminShell
 
         [DataMember(Name = "valueId")]
         [XmlElement(ElementName = "valueId")]
-        public GlobalReference ValueId { get; set; }
+        public GlobalReference? ValueId { get; set; }
 
         public MultiLanguageProperty()
         {

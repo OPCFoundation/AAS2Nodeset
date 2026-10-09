@@ -1,4 +1,4 @@
-
+﻿
 namespace AdminShell
 {
     using System.Runtime.Serialization;
@@ -9,6 +9,6 @@ namespace AdminShell
     {
         [DataMember(Name="semanticId")]
         [XmlElement(ElementName = "semanticId")]
-        public Reference SemanticId { get; set; }
+        public Reference? SemanticId { get; set; }
     }
 }

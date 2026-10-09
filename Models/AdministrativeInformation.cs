@@ -1,4 +1,4 @@
-
+﻿
 namespace AdminShell
 {
     using System.Runtime.Serialization;
@@ -17,10 +17,10 @@ namespace AdminShell
 
         [DataMember(Name="revision")]
         [XmlElement(ElementName= "revision")]
-        public string Revision { get; set; }
+        public string? Revision { get; set; }
 
         [DataMember(Name="version")]
         [XmlElement(ElementName = "version")]
-        public string Version { get; set; }
+        public string? Version { get; set; }
     }
 }

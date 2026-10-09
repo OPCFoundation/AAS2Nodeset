@@ -13,11 +13,11 @@ namespace AdminShell
         [Required]
         [DataMember(Name = "entityType")]
         [XmlElement(ElementName = "entityType")]
-        public string EntityType { get; set; }
+        public string? EntityType { get; set; }
 
         [DataMember(Name = "globalAssetId")]
         [XmlElement(ElementName = "globalAssetId")]
-        public string GlobalAssetId { get; set; }
+        public string? GlobalAssetId { get; set; }
 
         [DataMember(Name = "statements")]
         [XmlArray(ElementName = "statements")]

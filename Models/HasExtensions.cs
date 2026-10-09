@@ -1,4 +1,4 @@
-
+﻿
 namespace AdminShell
 {
     using System.Collections.Generic;
@@ -10,6 +10,6 @@ namespace AdminShell
     {
         [DataMember(Name="extensions")]
         [XmlArray(ElementName = "extensions")]
-        public List<Extension> Extensions { get; set; }
+        public List<Extension>? Extensions { get; set; }
     }
 }

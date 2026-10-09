@@ -9,7 +9,7 @@ namespace AdminShell
     {
         [DataMember(Name = "administration")]
         [XmlElement(ElementName = "administration")]
-        public AdministrativeInformation Administration { get; set; }
+        public AdministrativeInformation? Administration { get; set; }
 
         [DataMember(Name = "identification")]
         [XmlElement(ElementName = "identification")]

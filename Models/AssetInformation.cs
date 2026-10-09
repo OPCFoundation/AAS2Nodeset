@@ -10,15 +10,15 @@ namespace AdminShell
     {
         [DataMember(Name = "globalAssetId")]
         [XmlElement(ElementName = "globalAssetId")]
-        public string GlobalAssetId { get; set; }
+        public string? GlobalAssetId { get; set; }
 
         [DataMember(Name = "specificAssetIds")]
         [XmlArray(ElementName = "specificAssetIds")]
-        public List<IdentifierKeyValuePair> SpecificAssetIds { get; set; }
+        public List<IdentifierKeyValuePair>? SpecificAssetIds { get; set; }
 
         [DataMember(Name = "defaultThumbnail")]
         [XmlElement(ElementName = "defaultThumbnail")]
-        public Resource DefaultThumbnail { get; set; }
+        public Resource? DefaultThumbnail { get; set; }
 
         [DataMember(Name = "assetKind")]
         [XmlElement(ElementName = "assetKind")]
