@@ -109,7 +109,7 @@ namespace AdminShell
                     };
 
                     nodeSet.Models = [new ModelTableEntry() {
-                        ModelUri = _namespaceURI, Version = "0.9.0",
+                        ModelUri = _namespaceURI, Version = "1.0.0",
                         PublicationDateSpecified = true,
                         PublicationDate = DateTime.UtcNow.Date,
                         RequiredModel = [new ModelTableEntry() { ModelUri = c_dppNamespaceURI, Version = "1.0.0" }] }];
